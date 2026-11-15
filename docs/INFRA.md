@@ -97,12 +97,21 @@ Cloudflare DNS  (zone: keiku-labo.space)
 1. レジストラで `keiku-labo.space` を取得
 2. Cloudflare にサイト追加 → 指示されたネームサーバをレジストラ側で設定（ゾーンをCloudflareへ）
 3. Cloudflare Pages でプロジェクト作成（GitHubリポジトリ `triage-start` を接続）
+
+   > **wrangler 4.162 時点の注意。** `wrangler pages project create` は Workers へ
+   > 委譲しようとして失敗する。初回のみ `--force` を付けて従来の Pages 経路を使う:
+   > `npx wrangler pages project create triage-start --production-branch=main --force`
+   > プロジェクト作成後は `npm run deploy`（`wrangler pages deploy dist`）だけでよい。
+   > カスタムドメインの追加用サブコマンドは存在しないため、ダッシュボードから行う。
+
    - Framework preset: `Vite`
    - Build command: `npm run build`
    - Build output directory: `dist`
    - Node version: `.node-version` に `22` を置いて固定（ビルド環境のドリフト防止）
 4. Pages → Custom domains に `start.keiku-labo.space` を追加
    → CNAMEレコードが自動作成され、検証後にTLSが自動発行される
+   → **割り当て後、`index.html` の `og:url` / `og:image` を新しい正規URLへ切り替える。**
+     OGPは配信中の実URLを指していなければリンクカードが壊れる
 5. GitHub でブランチ保護: `main` への直接pushを禁止、Actionsのtypecheck/lint/testを必須チェックに設定
 
 > ゾーンをCloudflareに置かない場合も、外部DNSで

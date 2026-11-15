@@ -14,7 +14,8 @@ import { acknowledgeDisclaimer } from '@/lib/storage';
  * 実寸での確認は別途、各ビューポートで描画して目視する。
  */
 
-function renderApp() {
+function renderApp(route = '/') {
+  window.history.replaceState(null, '', `${route}?lang=ja`);
   return render(
     <I18nProvider>
       <SettingsProvider>
@@ -65,9 +66,13 @@ describe('ページ本体をスクロールさせない', () => {
     expect(root.className).toContain('minmax(0,1fr)');
   });
 
-  it('本体にスクロール領域を作らない（シート内部を除く）', async () => {
+  /*
+   * スクロールを許すのは「読み物」であるリファレンス画面とシートの内部だけ。
+   * 判断を行う画面（ホーム・学習・チャレンジ）は収まりきること自体が要件である。
+   */
+  it.each(['/', '/learn', '/challenge'])('%s にスクロール領域を作らない', async (route) => {
     const user = userEvent.setup();
-    const { container } = renderApp();
+    const { container } = renderApp(route);
     await dismissDisclaimer(user);
 
     const scrollable = [...container.querySelectorAll('*')].filter(
@@ -76,9 +81,19 @@ describe('ページ本体をスクロールさせない', () => {
     expect(scrollable).toEqual([]);
   });
 
+  it('リファレンスは読み物なので内部スクロールを許すが、ページ本体は固定のまま', async () => {
+    const user = userEvent.setup();
+    const { container } = renderApp('/reference');
+    await dismissDisclaimer(user);
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain('overflow-hidden');
+    expect(container.querySelector('.overflow-y-auto')).toBeTruthy();
+  });
+
   it('症例ペインが min-h-0 を持ち、イラストが余剰高を吸収する', async () => {
     const user = userEvent.setup();
-    const { container } = renderApp();
+    const { container } = renderApp('/learn');
     await dismissDisclaimer(user);
 
     const figure = container.querySelector('svg.patient-figure') as HTMLElement;
@@ -110,7 +125,7 @@ describe('高さに応じたレイアウト切り替え', () => {
 
   it('切り替え対象の要素が規定のクラスを持つ', async () => {
     const user = userEvent.setup();
-    const { container } = renderApp();
+    const { container } = renderApp('/learn');
     await dismissDisclaimer(user);
 
     const card = container.querySelector('article') as HTMLElement;
@@ -126,7 +141,7 @@ describe('高さに応じたレイアウト切り替え', () => {
 describe('常時表示を減らす（SPEC §5.1）', () => {
   it('免責文は出題画面に常時表示しない', async () => {
     const user = userEvent.setup();
-    const { container } = renderApp();
+    const { container } = renderApp('/learn');
     await dismissDisclaimer(user);
 
     expect(container.textContent).not.toContain('教育・訓練目的のシミュレーション');
@@ -212,7 +227,7 @@ describe('免責の確認（SPEC §1.7）', () => {
 describe('解説はシートの中だけに存在する', () => {
   it('回答前は解説がどこにもない', async () => {
     const user = userEvent.setup();
-    renderApp();
+    renderApp('/learn');
     await dismissDisclaimer(user);
 
     expect(screen.queryByRole('list', { name: '判定の根拠' })).not.toBeInTheDocument();
@@ -220,7 +235,7 @@ describe('解説はシートの中だけに存在する', () => {
 
   it('回答後の解説はシート内にあり、本体には出ない', async () => {
     const user = userEvent.setup();
-    renderApp();
+    renderApp('/learn');
     await dismissDisclaimer(user);
 
     await user.click(screen.getByRole('button', { name: 'III類・軽処置群' }));

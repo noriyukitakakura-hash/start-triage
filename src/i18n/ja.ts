@@ -151,6 +151,77 @@ export const ja = {
   'flow.decided': '確定',
   'flow.skipped': '不要',
 
+  // --- 書式 ---
+  'format.durationWithMinutes': '{minutes}分{seconds}秒',
+  'format.durationSeconds': '{seconds}秒',
+
+  // --- ホーム (S1) ---
+  'home.learn.description': '1問ずつ解説を見ながら練習します。回数無制限。',
+  'home.challenge.description': '10問を連続で解き、所要時間を計測します。',
+  'home.reference.description': 'START法の判定フローと区分の定義を確認します。',
+  'home.bestTime': '自己ベスト',
+  'home.bestTime.numeric': '数値モード',
+  'home.bestTime.observed': '実測モード',
+  'home.noBestTime': '記録なし',
+  'common.back': '戻る',
+
+  // --- 10問チャレンジ (S3) ---
+  'challenge.heading': '10問チャレンジ',
+  'challenge.ready': '準備',
+  'challenge.start': '開始',
+  'challenge.progress': '{current} / {total}',
+  'challenge.quit': '中断',
+
+  // --- 結果 (S4) ---
+  'result.heading': '結果',
+  'result.score': '{total}問中 {correct}問正解',
+  'result.time': 'タイム',
+  'result.perfect': '全問正解',
+  'result.newBest': '自己ベスト更新',
+  'result.bestSoFar': '自己ベスト {time}',
+  'result.retry': 'もう一度',
+  'result.backHome': 'ホームへ',
+  'result.share': 'Xに投稿する',
+  'result.shareHint': '全問正解で投稿できます',
+  'result.suddenDeathEnded': '誤答のため中断しました',
+  'result.reviewHint': '各問をタップすると解説を見られます',
+  'result.mode.numeric': '数値モードの記録',
+  'result.mode.observed': '実測モードの記録',
+  'result.modeNote': 'タイムは呼吸数の提示方式ごとに記録されます。観察に時間がかかる実測モードと数値モードは比較できません。',
+
+  // --- リファレンス (S5) ---
+  'reference.heading': 'START法リファレンス',
+  'reference.flow': '判定フロー',
+  'reference.categories': 'トリアージ区分',
+  'reference.criteria': '採用している基準値',
+  'reference.criteria.rr': '呼吸数 {low}回以下 または {high}回以上 で I類',
+  'reference.criteria.circulation': 'CRT {crt}秒以上 または 橈骨動脈 触知不能 で I類',
+  'reference.criteria.consciousness': '簡単な指示に従えなければ I類',
+  'reference.flowStep.walk': '歩行可能か？ → 可能なら III類',
+  'reference.flowStep.airway': '自発呼吸はあるか？ なければ気道確保 → 再開で I類、再開しなければ 0類',
+  'reference.flowStep.respiratoryRate': '呼吸数は基準内か？ 外れていれば I類',
+  'reference.flowStep.circulation': '循環は保たれているか？ 保たれていなければ I類',
+  'reference.flowStep.consciousness': '簡単な指示に従えるか？ 従えなければ I類、従えれば II類',
+
+  // --- 設定の追加分 ---
+  'settings.suddenDeath': 'サドンデス',
+  'settings.suddenDeath.description': '10問チャレンジで1問でも誤答したら即終了します。',
+  'settings.boundaryRate': '境界値の出題率',
+  'settings.boundaryRate.description': '閾値ちょうどの値を出す割合です。高いほど難しくなります。',
+  'settings.showTimer': '経過時間を表示',
+  'settings.showTimer.description': '10問チャレンジ中にタイマーを表示します。',
+  'settings.on': 'する',
+  'settings.off': 'しない',
+  'settings.resetStats': '累計成績を消去',
+  'settings.resetStats.done': '消去しました',
+
+  // --- X への投稿 (SPEC §2.5) ---
+  'share.text': 'START法トリアージ 10問チャレンジ 全問正解！\nタイム {time}（{mode}）',
+  'share.textWithBest': 'START法トリアージ 10問チャレンジ 全問正解！\nタイム {time}（{mode}）\n自己ベスト更新 🎉',
+  'share.mode.numeric': '数値モード',
+  'share.mode.observed': '実測モード',
+  'share.hashtags': 'STARTトリアージ,災害医療,トリアージ訓練',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',
 

@@ -238,6 +238,14 @@ export function recordBestTime(presentation: RrPresentation, timeMs: number): bo
   return true;
 }
 
+/** 学習モードの累計統計を消去する。設定や自己ベストには触れない */
+export function resetLearnStats(): LearnStats {
+  const current = loadState();
+  const fresh = emptyLearnStats();
+  saveState({ ...current, learnStats: fresh });
+  return fresh;
+}
+
 /** 現行版の免責文を確認済みか */
 export function hasAcknowledgedDisclaimer(): boolean {
   const acknowledged = loadState().disclaimerAckVersion;

@@ -1,9 +1,21 @@
 import { useCallback, useState } from 'react';
+import { ChallengeMode } from '@/features/challenge/ChallengeMode';
+import { HomeScreen } from '@/features/home/HomeScreen';
 import { LearnMode } from '@/features/learn/LearnMode';
+import { ReferenceScreen } from '@/features/reference/ReferenceScreen';
 import { useI18n } from '@/i18n';
+import type { TranslationKey } from '@/i18n/types';
 import { acknowledgeDisclaimer, hasAcknowledgedDisclaimer } from '@/lib/storage';
 import { DisclaimerDialog } from './DisclaimerDialog';
 import { SettingsSheet } from './SettingsSheet';
+import { useNavigate, useRoute, type Route } from './router';
+
+const SCREEN_TITLE: Record<Route, TranslationKey> = {
+  '/': 'app.titleShort',
+  '/learn': 'nav.practice',
+  '/challenge': 'challenge.heading',
+  '/reference': 'reference.heading',
+};
 
 /**
  * アプリのシェル（SPEC §5.1）。
@@ -17,6 +29,8 @@ import { SettingsSheet } from './SettingsSheet';
  */
 export function App() {
   const { t } = useI18n();
+  const route = useRoute();
+  const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
   // 初回のみ免責の確認を求める。確認済みなら出さない
   const [needsAcknowledgement, setNeedsAcknowledgement] = useState(() => !hasAcknowledgedDisclaimer());
@@ -35,8 +49,18 @@ export function App() {
 
   return (
     <div className="grid h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-slate-900 text-slate-100">
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-700 px-3 py-1.5">
-        <h1 className="truncate text-sm font-bold">{t('app.titleShort')}</h1>
+      <header className="flex shrink-0 items-center gap-1 border-b border-slate-700 px-2 py-1.5">
+        {route !== '/' && (
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label={t('common.back')}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xl text-slate-300 transition active:scale-95"
+          >
+            <span aria-hidden>‹</span>
+          </button>
+        )}
+        <h1 className="min-w-0 flex-1 truncate px-1 text-sm font-bold">{t(SCREEN_TITLE[route])}</h1>
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
@@ -50,7 +74,10 @@ export function App() {
       {/* コンテナクエリの基準。全幅・グリッド行の高さを持つ */}
       <div className="case-pane min-h-0">
         <main className="case-main mx-auto flex h-full w-full flex-col px-3 pb-2 pt-2">
-          <LearnMode />
+          {route === '/' && <HomeScreen onNavigate={navigate} />}
+          {route === '/learn' && <LearnMode />}
+          {route === '/challenge' && <ChallengeMode onHome={() => navigate('/')} />}
+          {route === '/reference' && <ReferenceScreen />}
         </main>
       </div>
 

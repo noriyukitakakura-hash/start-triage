@@ -154,6 +154,77 @@ export const en: Messages = {
   'flow.decided': 'Decided',
   'flow.skipped': 'Not needed',
 
+  // --- 書式 ---
+  'format.durationWithMinutes': '{minutes}:{seconds}',
+  'format.durationSeconds': '{seconds}s',
+
+  // --- ホーム (S1) ---
+  'home.learn.description': 'Work through cases one at a time with explanations. Unlimited.',
+  'home.challenge.description': 'Answer 10 cases in a row against the clock.',
+  'home.reference.description': 'Review the START flow and the category definitions.',
+  'home.bestTime': 'Personal best',
+  'home.bestTime.numeric': 'Number mode',
+  'home.bestTime.observed': 'Observe mode',
+  'home.noBestTime': 'No record yet',
+  'common.back': 'Back',
+
+  // --- 10問チャレンジ (S3) ---
+  'challenge.heading': '10-Case Challenge',
+  'challenge.ready': 'Ready',
+  'challenge.start': 'Start',
+  'challenge.progress': '{current} / {total}',
+  'challenge.quit': 'Quit',
+
+  // --- 結果 (S4) ---
+  'result.heading': 'Result',
+  'result.score': '{correct} of {total} correct',
+  'result.time': 'Time',
+  'result.perfect': 'Perfect score',
+  'result.newBest': 'New personal best',
+  'result.bestSoFar': 'Personal best {time}',
+  'result.retry': 'Try again',
+  'result.backHome': 'Home',
+  'result.share': 'Post on X',
+  'result.shareHint': 'Available with a perfect score',
+  'result.suddenDeathEnded': 'Ended early on a wrong answer',
+  'result.reviewHint': 'Tap a case to see its explanation',
+  'result.mode.numeric': 'Number mode record',
+  'result.mode.observed': 'Observe mode record',
+  'result.modeNote': 'Times are recorded separately per respiratory-rate mode. Observe mode takes longer by design, so the two cannot be compared.',
+
+  // --- リファレンス (S5) ---
+  'reference.heading': 'START Reference',
+  'reference.flow': 'Decision flow',
+  'reference.categories': 'Triage categories',
+  'reference.criteria': 'Criteria in use',
+  'reference.criteria.rr': 'Respiratory rate {low} or below, or {high} or above → Immediate',
+  'reference.criteria.circulation': 'CRT {crt} sec or more, or radial pulse not palpable → Immediate',
+  'reference.criteria.consciousness': 'Does not follow simple commands → Immediate',
+  'reference.flowStep.walk': 'Can they walk? If yes → Minor',
+  'reference.flowStep.airway': 'Spontaneous breathing? If not, open the airway → resumes: Immediate, does not: Deceased',
+  'reference.flowStep.respiratoryRate': 'Is the respiratory rate within range? If not → Immediate',
+  'reference.flowStep.circulation': 'Is circulation adequate? If not → Immediate',
+  'reference.flowStep.consciousness': 'Do they follow simple commands? If not → Immediate, if yes → Delayed',
+
+  // --- 設定の追加分 ---
+  'settings.suddenDeath': 'Sudden death',
+  'settings.suddenDeath.description': 'End the challenge immediately on the first wrong answer.',
+  'settings.boundaryRate': 'Borderline case rate',
+  'settings.boundaryRate.description': 'How often values land exactly on a threshold. Higher is harder.',
+  'settings.showTimer': 'Show the timer',
+  'settings.showTimer.description': 'Display elapsed time during the challenge.',
+  'settings.on': 'On',
+  'settings.off': 'Off',
+  'settings.resetStats': 'Clear all-time results',
+  'settings.resetStats.done': 'Cleared',
+
+  // --- X への投稿 ---
+  'share.text': 'Perfect score on the START triage drill — 10/10\nTime {time} ({mode})',
+  'share.textWithBest': 'Perfect score on the START triage drill — 10/10\nTime {time} ({mode})\nNew personal best 🎉',
+  'share.mode.numeric': 'number mode',
+  'share.mode.observed': 'observe mode',
+  'share.hashtags': 'STARTtriage,DisasterMedicine,MassCasualty',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',
 
