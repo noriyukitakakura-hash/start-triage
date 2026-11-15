@@ -6,6 +6,12 @@ import { en } from '@/i18n/en';
 import { interpolate, translate } from '@/i18n';
 import { detectLocale } from '@/i18n/detect';
 import { LOCALES } from '@/i18n/types';
+import { ALL_RATIONALE_KEYS, CONCLUSION_KEY, explain } from '@/domain/explain';
+import { VALID_COMBINATIONS, generateCase } from '@/domain/generator';
+import { ILLUSTRATIONS } from '@/domain/illustrations';
+import { JP_FDMA } from '@/domain/profiles';
+import { createRng } from '@/domain/rng';
+import { CATEGORIES, DECIDING_STEPS } from '@/domain/types';
 
 const PLACEHOLDER = /\{(\w+)\}/g;
 function placeholders(value: string): string[] {
@@ -43,6 +49,64 @@ describe('I18N.md §9-4: ドメイン層の言語非依存性', () => {
       return /from\s+['"](.*i18n.*|react(-dom)?)['"]/.test(src);
     });
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('I18N.md §9-5: ドメイン層が生成するキーの実在性', () => {
+  const keys = Object.keys(ja);
+
+  it('judge が返し得る全根拠キーが ja/en 双方に存在する', () => {
+    const missing = ALL_RATIONALE_KEYS.filter((k) => !keys.includes(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('explain の結論キーが存在する', () => {
+    expect(keys).toContain(CONCLUSION_KEY);
+  });
+
+  it('イラストカタログの全状況文キーが存在する', () => {
+    const missing = ILLUSTRATIONS.map((i) => i.situationKey).filter((k) => !keys.includes(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('全 DecidingStep のステップ名キーが存在する', () => {
+    const missing = DECIDING_STEPS.map((s) => `step.${s}`).filter((k) => !keys.includes(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('全 Category の区分名キーが存在する', () => {
+    const missing = CATEGORIES.flatMap((c) => [
+      `category.${c}.roman`,
+      `category.${c}.short`,
+      `category.${c}.name`,
+      `category.${c}.color`,
+    ]).filter((k) => !keys.includes(k));
+    expect(missing).toEqual([]);
+  });
+
+  it('全ステップ・全分岐を網羅しても未登録のキーが現れない', () => {
+    // 生成し得る全組み合わせを実際に判定・解説まで通し、キーの欠落を検出する
+    const rng = createRng('i18n-coverage');
+    const used = new Set<string>();
+
+    for (let i = 0; i < 3000; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const g = generateCase({ target: combo.target, decidingStep: combo.decidingStep }, rng);
+      const e = explain(g.case, JP_FDMA);
+
+      used.add(e.conclusion.key);
+      used.add(g.case.patient.situationKey);
+      for (const step of e.steps) {
+        used.add(`step.${step.step}`);
+        for (const d of step.details) used.add(d.key);
+      }
+    }
+
+    const missing = [...used].filter((k) => !keys.includes(k));
+    expect(missing).toEqual([]);
+    // 14の根拠キーすべてが実際に到達されることも確認する
+    expect(ALL_RATIONALE_KEYS.filter((k) => !used.has(k))).toEqual([]);
   });
 });
 

@@ -104,6 +104,12 @@
 | ランダム | 1 |
 
   うち **4問以上を境界値症例**とする（下記 §3.3）。
+
+  > **境界値の下限には構造的制約がある。** 境界値を取り得るのは呼吸数・循環・意識の
+  > 3ステップのみで、III類（歩行）と0類（気道確保）は真偽値判定のため境界値が存在しない。
+  > したがって下限を満たせるのは I類4問 + II類2問 = 6問のみであり、
+  > 不足時は **I類・II類側の確定ステップを境界値可能なものへ差し替える**（区分の構成比は維持する）。
+  > I類4問すべてが気道確保を引くと上限3問となり下限に届かないため、この差し替えが必須である。
 - 結果画面: 10問の正誤一覧（各問の症例サマリと正解＋解説リンク）、合計タイム、自己ベスト更新表示。
 - **10/10 の場合のみ** `Xに投稿する` ボタンを表示。9/10以下では非表示（文言: 「全問正解で投稿できます」）。
 - サドンデス設定（既定OFF）: ONの場合、1問誤答した時点で即結果画面へ。
@@ -170,6 +176,8 @@
 3. `decidingStep` より後の項目も**矛盾のない値を生成して表示する**（判定には不要だが、
    「不要な情報を無視できる」こと自体が訓練になる）。
 4. 境界値バイアス: 設定値の確率（既定35%）で、`decidingStep` の値を境界値ピッタリにする。
+5. **通過側の数値項目にも、同じ確率で独立に境界値バイアスをかける。**
+   呼吸数 29 を通過させてから循環で確定する症例は難度が高く、教育価値が大きいため。
 
 #### 値域テーブル
 | 項目 | フィールド | 通過（正常）側 | 該当（異常）側 | 境界値 |
@@ -177,11 +185,15 @@
 | 歩行 | `canWalk` | `false` | `true`(=III) | — |
 | 自発呼吸 | `hasSpontaneousBreathing` | `true` | `false` | — |
 | 気道確保後 | `breathingAfterAirway` | `true`(=I) | `false`(=0) | — |
-| 呼吸数 | `respiratoryRate` | 10–29 | 0–9 または 30–44 | 9, 10, 29, 30 |
+| 呼吸数 | `respiratoryRate` | 10–29 | **4–9** または 30–44 | 9, 10, 29, 30 |
 | 橈骨動脈 | `radialPulsePalpable` | `true` | `false` | — |
 | 脈拍 | `pulseRate` | 60–119 | 120–160（または<50） | 119, 120 |
 | CRT | `crtSeconds` | 1.0–1.9 | 2.0–4.0 | 1.9, 2.0 |
 | 指示応答 | `obeysCommands` | `true` | `false` | — |
+
+> **呼吸数の下限域は 4–9 とする（当初案の 0–9 から変更）。**
+> 呼吸数 0 は「自発呼吸あり」と矛盾するため、自発呼吸がある症例で生成してはならない。
+> 呼吸数 0 は `hasSpontaneousBreathing === false` の症例でのみ使う。
 
 #### 整合性制約（生成後に必ず満たすこと）
 - `radialPulsePalpable === false` のとき `pulseRate` は表示しない（`null`）。触知できない＝数えられない。
@@ -279,8 +291,10 @@ triage-start/
 ```ts
 export type Category = 'I' | 'II' | 'III' | '0';
 
+// 「自発呼吸の有無」は単独では判定を確定させない（呼吸がなければ必ず気道確保の結果で
+// 確定する）ため、独立したステップとして持たない。I類と0類の区別は category が担う
 export type DecidingStep =
-  | 'walk' | 'breathing' | 'airway'
+  | 'walk' | 'airway'
   | 'respiratoryRate' | 'circulation' | 'consciousness';
 
 export interface TriageCase {
@@ -309,6 +323,10 @@ export interface Judgement {
 }
 
 export function judge(c: TriageCase, p: RuleProfile): Judgement;
+
+// 矛盾した症例は黙って誤った区分を返さず、即座に失敗させる。
+// 教育アプリにおいて誤った判定を提示することは、クラッシュより有害である
+export class InconsistentCaseError extends Error {}
 ```
 
 ### 4.4 localStorage スキーマ
