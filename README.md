@@ -2,7 +2,7 @@
 
 災害現場の一次トリアージ（START法）を反復練習するWebアプリ。
 
-- 本番: https://start.keiku-labo.space
+- 本番: https://start.keiku-labo.space （予備: https://triage-start.pages.dev）
 - 対応言語: 日本語 / English（UIから随時切替）
 
 > **本アプリは教育・訓練目的のシミュレーションです。**

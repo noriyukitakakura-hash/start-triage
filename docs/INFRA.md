@@ -110,8 +110,10 @@ Cloudflare DNS  (zone: keiku-labo.space)
    - Node version: `.node-version` に `22` を置いて固定（ビルド環境のドリフト防止）
 4. Pages → Custom domains に `start.keiku-labo.space` を追加
    → CNAMEレコードが自動作成され、検証後にTLSが自動発行される
-   → **割り当て後、`index.html` の `og:url` / `og:image` を新しい正規URLへ切り替える。**
-     OGPは配信中の実URLを指していなければリンクカードが壊れる
+   → **割り当て後、`index.html` の `og:url` / `og:image` / `canonical` を新しい正規URLへ切り替える。**
+     OGPは配信中の実URLを指していなければリンクカードが壊れる。
+     **2026-11-15 に割り当て済み。正規URLは `https://start.keiku-labo.space/`。**
+     `triage-start.pages.dev` でも同じ内容が見えるため `canonical` で正規化している
 5. GitHub でブランチ保護: `main` への直接pushを禁止、Actionsのtypecheck/lint/testを必須チェックに設定
 
 > ゾーンをCloudflareに置かない場合も、外部DNSで
@@ -164,6 +166,10 @@ SPAのクライアントルーティング用（200 rewrite。301ではない）
 - **監視**: 動かすサーバがないため死活監視は不要。必要ならCloudflare Web Analyticsで到達状況のみ確認。
 - **ロールバック**: Pagesのデプロイ履歴から任意のビルドへ即時ロールバック可（無料）。
 - **秘密情報**: なし。APIキー・DB接続情報・OAuthクレデンシャルを一切持たない構成（漏洩リスクがゼロ）。
+- **OGP画像**: `public/og-image.png`（1200×630）。元データは `docs/og-image.svg`。
+  **背景を単色で構成している。** グラデーションを入れるとPNGの圧縮が効かず
+  624KB になった。単色化で94KBに収まる（見た目はほぼ同じ）。
+  ファイル名にハッシュが付かないため、キャッシュは1日に抑えている（`public/_headers`）。
 - **個人情報**: 取得しない。Cookieも使わない。localStorageは端末内に留まり送信されない。
   → プライバシーポリシーは「情報を収集しない」旨の短い記載で足りる。
 - **バックアップ**: 状態がGitリポジトリのみ。別途バックアップ不要。

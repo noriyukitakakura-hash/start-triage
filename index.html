@@ -13,22 +13,42 @@
     <!-- OGP: バックエンドを持たないため1種類のみ配信し、日英併記とする（docs/I18N.md §7） -->
     <meta property="og:type" content="website" />
     <!--
-      og:url / og:image は実際に配信している正規URLでなければならない。
-      カスタムドメイン start.keiku-labo.space を Pages に割り当てたら、
-      ここと docs/INFRA.md の記述を切り替える。
+      正規URLはカスタムドメイン。pages.dev でも同じ内容が見えるため、
+      canonical で正規化しておく（重複コンテンツの回避）。
     -->
-    <meta property="og:url" content="https://triage-start.pages.dev/" />
+    <link rel="canonical" href="https://start.keiku-labo.space/" />
+    <meta property="og:url" content="https://start.keiku-labo.space/" />
     <meta property="og:title" content="START法トリアージ・トレーナー | START Triage Trainer" />
     <meta
       property="og:description"
       content="災害現場の一次トリアージ（START法）を反復練習する。10問チャレンジで全問正解を狙おう。&#10;Drill primary triage (START). Take the 10-case challenge and aim for a perfect score."
     />
-    <meta property="og:image" content="https://triage-start.pages.dev/og-image.png" />
+    <meta property="og:image" content="https://start.keiku-labo.space/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="START法トリアージ・トレーナー。赤I・黄II・緑III・黒0のトリアージ区分と傷病者のイラスト。"
+    />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:locale:alternate" content="en_US" />
+
+    <!--
+      X はこれらが無ければ og:* にフォールバックするが、明示しておく方が確実。
+      summary_large_image は画像が 300x157 以上・5MB 以下であることが条件。
+    -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="START法トリアージ・トレーナー | START Triage Trainer" />
+    <meta
+      name="twitter:description"
+      content="災害現場の一次トリアージ（START法）を反復練習する。10問チャレンジで全問正解を狙おう。"
+    />
+    <meta name="twitter:image" content="https://start.keiku-labo.space/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="START法トリアージ・トレーナー。赤I・黄II・緑III・黒0のトリアージ区分と傷病者のイラスト。"
+    />
   </head>
   <body>
     <div id="root"></div>
