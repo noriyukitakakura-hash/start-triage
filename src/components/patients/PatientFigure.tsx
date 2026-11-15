@@ -57,7 +57,8 @@ export function PatientFigure({ case: c, animate, className }: PatientFigureProp
       viewBox={FIGURE_VIEWBOX}
       role="img"
       aria-label={t('patient.figureLabel')}
-      className={['patient-figure', className].filter(Boolean).join(' ')}
+      /* 親の高さに追従させる。preserveAspectRatio の既定（xMidYMid meet）で縦横比を保つ */
+      className={['patient-figure', 'h-full w-full', className].filter(Boolean).join(' ')}
     >
       {parts.behind}
       <g {...chestProps}>{parts.chest}</g>

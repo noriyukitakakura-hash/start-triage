@@ -10,3 +10,112 @@ button {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/*
+ * ページ本体は絶対にスクロールさせない（docs/SPEC.md §5.1）。
+ * ゴムバンド効果で画面全体が動くのも抑止する。
+ */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* 下から出る共通シート（components/Sheet.tsx） */
+.sheet {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  /* dialog 自身を下寄せのフレックス容器にして、パネルを下端へ張り付ける */
+  display: none;
+}
+
+.sheet[open] {
+  display: flex;
+  /* :modal の UA スタイルに頼らず明示する。show() にフォールバックしても位置が崩れない */
+  position: fixed;
+  inset: 0;
+  /* スクロールするのは .sheet__body だけ。dialog 自身はスクロールさせない */
+  overflow: hidden;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet::backdrop {
+  background: rgb(2 6 23 / 0.65);
+}
+
+.sheet__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 36rem;
+  /* 画面の8割まで。背後の症例が見え続ける */
+  max-height: 85dvh;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  background: var(--color-slate-800);
+  color: var(--color-slate-100);
+  box-shadow: 0 -8px 32px rgb(2 6 23 / 0.6);
+}
+
+/* 内容が長いときはここだけがスクロールする */
+.sheet__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+}
+
+.sheet__footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-slate-700);
+  padding: 0.75rem;
+}
+
+/*
+ * 症例ペインのレイアウト切り替え（docs/SPEC.md §5.1）。
+ *
+ * 端末の向き（orientation）ではなく **縦に積むだけの高さがあるか** で切り替える。
+ * 横持ちでも背の高い端末はあり、ウィンドウ分割やブラウザのツールバーでも
+ * 使える高さは変わる。判定すべきはあくまで利用可能な高さである。
+ *
+ * コンテナクエリにすることで、ビューポートではなくこのペイン自身の寸法で
+ * 評価される。実ブラウザと静的スナップショットで同じ結果になり、検証もできる。
+ */
+.case-pane {
+  container-type: size;
+  container-name: pane;
+}
+
+/* 縦に積むときは読みやすい幅に抑える */
+.case-main {
+  max-width: 36rem;
+}
+
+/* 縦に積むと判定材料が潰れる高さでは、イラストと所見を横に並べる */
+@container pane (max-height: 440px) {
+  /* 高さが足りないぶん、横幅を使い切る */
+  .case-main {
+    max-width: 64rem;
+  }
+
+  .case-layout {
+    flex-direction: row;
+  }
+
+  .case-figure {
+    /* イラストをやや広く取る。呼吸の視認性が最優先 */
+    flex: 1.15 1 0%;
+    min-width: 0;
+  }
+
+  .case-info {
+    flex: 1 1 0%;
+    min-width: 0;
+    justify-content: center;
+  }
+}

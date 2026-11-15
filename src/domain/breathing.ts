@@ -1,4 +1,4 @@
-import type { TriageCase } from './types';
+import type { RuleProfile, TriageCase } from './types';
 
 /**
  * 呼吸の観察（実測モード）に必要な臨床的導出。詳細は docs/OBSERVATION.md
@@ -88,4 +88,20 @@ export function estimateRate(taps: number, elapsedMs: number): number {
  */
 export function isEstimateReliable(elapsedMs: number): boolean {
   return elapsedMs >= MIN_ESTIMATE_MS;
+}
+
+/**
+ * 呼吸数が属する帯。実測モードで「数え値はずれたが帯の判断は正しい」を
+ * 切り分けるために使う（docs/OBSERVATION.md §6）。
+ *
+ * 帯の境目は `RuleProfile` から取る。パターン分類（{@link breathingPatternOf}）とは
+ * 別概念であり、こちらは判定基準そのものを反映する。
+ */
+export const RESPIRATORY_BANDS = ['low', 'withinRange', 'high'] as const;
+export type RespiratoryBand = (typeof RESPIRATORY_BANDS)[number];
+
+export function respiratoryBandOf(rr: number, profile: RuleProfile): RespiratoryBand {
+  if (rr <= profile.respiratoryRateLowMax) return 'low';
+  if (rr >= profile.respiratoryRateHighMin) return 'high';
+  return 'withinRange';
 }

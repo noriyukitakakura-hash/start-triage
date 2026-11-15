@@ -86,6 +86,71 @@ export const ja = {
   'vital.breathing.present': 'あり',
   'vital.breathing.absent': 'なし',
 
+  // --- 学習モード (S2) ---
+  'learn.heading': '学習モード',
+  'learn.selectCategory': 'この傷病者のトリアージ区分を選んでください',
+  'learn.next': '次の症例',
+  'learn.correct': '正解',
+  'learn.incorrect': '不正解',
+  'learn.yourAnswer': 'あなたの回答',
+  'learn.expectedAnswer': '正しい区分',
+  'learn.sessionStats': 'このセッション: {answered}問中 {correct}問正解（{accuracy}%）',
+  'learn.totalStats': '累計: {answered}問中 {correct}問正解（{accuracy}%）',
+  'learn.shortcutHint': 'キーボード: 1 / 2 / 3 / 0 で回答、Enter で次へ',
+
+  // --- 実測モード (docs/OBSERVATION.md §6) ---
+  'observation.heading': '呼吸の観察',
+  'observation.instruction': '胸郭の動きを見て、呼吸に合わせてタップしてください。',
+  'observation.countingOptional': '数えずに判断してもかまいません。',
+  'observation.tap': '呼吸を数える',
+  'observation.reset': '数え直す',
+  'observation.elapsed': '経過',
+  'observation.elapsedValue': '{seconds} 秒',
+  'observation.taps': 'タップ',
+  'observation.tapsValue': '{count} 回',
+  'observation.estimated': '推定',
+  'observation.estimatedValue': '約 {rate} 回/分',
+  'observation.needMoreTaps': 'もう少し数えると推定値が出ます',
+  'observation.openAirway': '気道確保を行う',
+  'observation.airwayNotNeeded': '自発呼吸を確認。気道確保は不要です。',
+  'observation.airwayResumed': '気道確保により呼吸が再開しました。',
+  'observation.airwayNoBreathing': '気道確保後も自発呼吸がありません。',
+  'observation.reducedMotionFallback': '動きを減らす設定が有効なため、呼吸数を数値で表示しています。',
+
+  // --- 解説の追加分 ---
+  'explain.heading': '判定の根拠',
+  'explain.countAccuracy': '推定 {estimated} 回/分 ／ 実際 {actual} 回/分（誤差 {delta}）',
+  'explain.countExact': '推定 {estimated} 回/分。実際の呼吸数と一致しています。',
+  'explain.countNotAttempted': '呼吸数は数えませんでした。実際は {actual} 回/分です。',
+  'explain.classificationCorrect': '数え値はずれましたが、「{band}」という判断自体は正しくできています。',
+  'explain.classificationWrong': '数え値のずれが「{band}」の判断に影響しています。',
+  'explain.bandLow': '{threshold}回以下',
+  'explain.bandHigh': '{threshold}回以上',
+  'explain.bandNormal': '{low}回超〜{high}回未満',
+  'explain.agonalNote': '死戦期呼吸です。胸郭はわずかに動いているため自発呼吸はあり、呼吸数が{threshold}回以下なので I類になります。',
+
+  // --- 設定 (S6) ---
+  'settings.rrPresentation': '呼吸数の提示',
+  'settings.rrPresentation.numeric': '数値',
+  'settings.rrPresentation.numeric.description': '呼吸数を数値で表示します。閾値の記憶を訓練します。',
+  'settings.rrPresentation.observed': '実測',
+  'settings.rrPresentation.observed.description': '胸郭の動きを見て数えます。現場の実務を訓練します。',
+
+  // --- シェル・設定シート (S6) ---
+  'app.titleShort': 'START法トリアージ',
+  'settings.heading': '設定',
+  'settings.open': '設定を開く',
+  'settings.close': '閉じる',
+  'settings.disclaimer': '免責・判定基準について',
+  'settings.stats': '累計成績',
+  'disclaimer.heading': 'ご確認ください',
+  'disclaimer.acknowledge': '確認しました',
+  'feedback.heading': '判定結果',
+  'feedback.showExplanation': '解説を見る',
+  'flow.passed': '通過',
+  'flow.decided': '確定',
+  'flow.skipped': '不要',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',
 

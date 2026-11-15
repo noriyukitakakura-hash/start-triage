@@ -4,6 +4,7 @@
  */
 import { DEFAULT_LOCALE } from '@/i18n/detect';
 import { isLocale, type Locale } from '@/i18n/types';
+import { CATEGORIES, type Category } from '@/domain/types';
 
 const STORAGE_KEY = 'triage-start:v1';
 const SCHEMA_VERSION = 2;
@@ -49,10 +50,33 @@ export interface Settings {
  */
 export type BestTimes = Record<RrPresentation, number | null>;
 
+/**
+ * 学習モードの累計統計（SPEC §2.3）。
+ * `confusion[expected][answered]` に誤答の内訳を積む。どの区分をどの区分と
+ * 取り違えやすいかが分かり、弱点が可視化される。
+ */
+export interface LearnStats {
+  answered: number;
+  correct: number;
+  confusion: Record<Category, Record<Category, number>>;
+}
+
+/**
+ * 免責文の版番号（SPEC §1.7）。
+ *
+ * 初回起動時に明示的な確認を求め、確認した版を記録する。
+ * **免責文を実質的に改訂したらこの値を上げる。** 利用者に再度確認を求めるため。
+ * 文言の微修正では上げない。
+ */
+export const DISCLAIMER_VERSION = 1;
+
 export interface PersistedState {
   schemaVersion: number;
   settings: Settings;
   bestTimeMs: BestTimes;
+  learnStats: LearnStats;
+  /** 利用者が確認した免責文の版。未確認は null */
+  disclaimerAckVersion: number | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -66,10 +90,26 @@ export const DEFAULT_SETTINGS: Settings = {
 
 export const DEFAULT_BEST_TIMES: BestTimes = { numeric: null, observed: null };
 
+function emptyConfusion(): Record<Category, Record<Category, number>> {
+  const rows = {} as Record<Category, Record<Category, number>>;
+  for (const expected of CATEGORIES) {
+    const row = {} as Record<Category, number>;
+    for (const answered of CATEGORIES) row[answered] = 0;
+    rows[expected] = row;
+  }
+  return rows;
+}
+
+export function emptyLearnStats(): LearnStats {
+  return { answered: 0, correct: 0, confusion: emptyConfusion() };
+}
+
 export const DEFAULT_STATE: PersistedState = {
   schemaVersion: SCHEMA_VERSION,
   settings: DEFAULT_SETTINGS,
   bestTimeMs: DEFAULT_BEST_TIMES,
+  learnStats: emptyLearnStats(),
+  disclaimerAckVersion: null,
 };
 
 function readRaw(): unknown {
@@ -93,6 +133,34 @@ function sanitizeBestTimes(value: unknown): BestTimes {
     typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
 
   return { numeric: pick(obj.numeric), observed: pick(obj.observed) };
+}
+
+/** 保存値は外部入力として扱い、型を偽らず unknown のまま辿る */
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
+function sanitizeLearnStats(value: unknown): LearnStats {
+  const fresh = emptyLearnStats();
+  const s = asRecord(value);
+  if (s === null) return fresh;
+
+  const count = (v: unknown): number =>
+    typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0;
+
+  const stored = asRecord(s.confusion);
+  if (stored !== null) {
+    for (const expected of CATEGORIES) {
+      const row = asRecord(stored[expected]);
+      if (row === null) continue;
+      for (const answered of CATEGORIES) {
+        fresh.confusion[expected][answered] = count(row[answered]);
+      }
+    }
+  }
+
+  const answered = count(s.answered);
+  return { answered, correct: Math.min(answered, count(s.correct)), confusion: fresh.confusion };
 }
 
 function sanitizeSettings(value: unknown): Settings {
@@ -137,6 +205,11 @@ export function loadState(): PersistedState {
     schemaVersion: SCHEMA_VERSION,
     settings: sanitizeSettings(obj.settings),
     bestTimeMs: sanitizeBestTimes(obj.bestTimeMs),
+    learnStats: sanitizeLearnStats(obj.learnStats),
+    disclaimerAckVersion:
+      typeof obj.disclaimerAckVersion === 'number' && Number.isFinite(obj.disclaimerAckVersion)
+        ? obj.disclaimerAckVersion
+        : null,
   };
 }
 
@@ -163,6 +236,36 @@ export function recordBestTime(presentation: RrPresentation, timeMs: number): bo
 
   saveState({ ...current, bestTimeMs: { ...current.bestTimeMs, [presentation]: timeMs } });
   return true;
+}
+
+/** 現行版の免責文を確認済みか */
+export function hasAcknowledgedDisclaimer(): boolean {
+  const acknowledged = loadState().disclaimerAckVersion;
+  return acknowledged !== null && acknowledged >= DISCLAIMER_VERSION;
+}
+
+/** 免責文を確認したことを記録する */
+export function acknowledgeDisclaimer(): void {
+  saveState({ ...loadState(), disclaimerAckVersion: DISCLAIMER_VERSION });
+}
+
+/** 学習モードの1問分の結果を累計に加える */
+export function recordLearnAnswer(expected: Category, answered: Category): LearnStats {
+  const current = loadState();
+  const stats = current.learnStats;
+  const next: LearnStats = {
+    answered: stats.answered + 1,
+    correct: stats.correct + (expected === answered ? 1 : 0),
+    confusion: {
+      ...stats.confusion,
+      [expected]: {
+        ...stats.confusion[expected],
+        [answered]: stats.confusion[expected][answered] + 1,
+      },
+    },
+  };
+  saveState({ ...current, learnStats: next });
+  return next;
 }
 
 /** 保存済みの locale のみを取得する（起動時の言語決定用） */

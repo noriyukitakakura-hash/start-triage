@@ -5,8 +5,13 @@ import {
   OBSERVED_RR_MARGIN,
   isRrPresentation,
   loadState,
+  DISCLAIMER_VERSION,
+  acknowledgeDisclaimer,
+  emptyLearnStats,
+  hasAcknowledgedDisclaimer,
   loadStoredLocale,
   patchSettings,
+  recordLearnAnswer,
   recordBestTime,
   rrMarginFor,
   saveState,
@@ -66,6 +71,8 @@ describe('loadState: 不正な値の検証', () => {
       schemaVersion: 2,
       settings: DEFAULT_SETTINGS,
       bestTimeMs: DEFAULT_BEST_TIMES,
+      learnStats: emptyLearnStats(),
+      disclaimerAckVersion: null,
     });
   });
 
@@ -108,7 +115,53 @@ describe('loadState: 不正な値の検証', () => {
       schemaVersion: 2,
       settings: DEFAULT_SETTINGS,
       bestTimeMs: DEFAULT_BEST_TIMES,
+      learnStats: emptyLearnStats(),
+      disclaimerAckVersion: null,
     });
+  });
+});
+
+describe('recordLearnAnswer: 学習統計（SPEC §2.3）', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('正答と誤答を累計する', () => {
+    recordLearnAnswer('I', 'I');
+    recordLearnAnswer('II', 'I');
+    const stats = recordLearnAnswer('III', 'III');
+
+    expect(stats.answered).toBe(3);
+    expect(stats.correct).toBe(2);
+  });
+
+  it('誤答の内訳を混同行列に積む', () => {
+    recordLearnAnswer('II', 'I');
+    recordLearnAnswer('II', 'I');
+    const stats = recordLearnAnswer('0', 'I');
+
+    expect(stats.confusion.II.I).toBe(2);
+    expect(stats.confusion['0'].I).toBe(1);
+    expect(stats.confusion.II.II).toBe(0);
+  });
+
+  it('正答も混同行列の対角に積まれる', () => {
+    const stats = recordLearnAnswer('III', 'III');
+    expect(stats.confusion.III.III).toBe(1);
+  });
+
+  it('統計は永続化される', () => {
+    recordLearnAnswer('I', 'I');
+    expect(loadState().learnStats.answered).toBe(1);
+  });
+
+  it('壊れた統計は初期化され、正答数が回答数を超えない', () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ schemaVersion: 2, settings: {}, bestTimeMs: {}, learnStats: { answered: 3, correct: 99, confusion: 'broken' } }),
+    );
+    const stats = loadState().learnStats;
+    expect(stats.answered).toBe(3);
+    expect(stats.correct).toBe(3);
+    expect(stats.confusion.I.I).toBe(0);
   });
 });
 
@@ -197,7 +250,7 @@ describe('localStorage が使えない環境', () => {
       throw new DOMException('QuotaExceededError');
     });
 
-    expect(() => saveState({ schemaVersion: 2, settings: DEFAULT_SETTINGS, bestTimeMs: DEFAULT_BEST_TIMES })).not.toThrow();
+    expect(() => saveState({ schemaVersion: 2, settings: DEFAULT_SETTINGS, bestTimeMs: DEFAULT_BEST_TIMES, learnStats: emptyLearnStats(), disclaimerAckVersion: null })).not.toThrow();
     expect(() => patchSettings({ rrPresentation: 'observed' })).not.toThrow();
     expect(() => recordBestTime('numeric', 1000)).not.toThrow();
 
@@ -213,5 +266,43 @@ describe('localStorage が使えない環境', () => {
     expect(loadStoredLocale()).toBeNull();
 
     spy.mockRestore();
+  });
+});
+
+describe('免責文の確認状態（SPEC §1.7）', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('初回は未確認', () => {
+    expect(hasAcknowledgedDisclaimer()).toBe(false);
+    expect(loadState().disclaimerAckVersion).toBeNull();
+  });
+
+  it('確認すると記録され、次回以降は確認済みになる', () => {
+    acknowledgeDisclaimer();
+    expect(hasAcknowledgedDisclaimer()).toBe(true);
+    expect(loadState().disclaimerAckVersion).toBe(DISCLAIMER_VERSION);
+  });
+
+  it('免責文を改訂したら（版が上がったら）再確認が必要になる', () => {
+    writeRaw({ schemaVersion: 2, settings: {}, bestTimeMs: {}, disclaimerAckVersion: DISCLAIMER_VERSION - 1 });
+    expect(hasAcknowledgedDisclaimer()).toBe(false);
+  });
+
+  it('不正な値は未確認として扱う', () => {
+    for (const bad of ['yes', true, {}, NaN]) {
+      writeRaw({ schemaVersion: 2, settings: {}, bestTimeMs: {}, disclaimerAckVersion: bad });
+      expect(hasAcknowledgedDisclaimer()).toBe(false);
+    }
+  });
+
+  it('確認しても他の設定や統計を壊さない', () => {
+    patchSettings({ rrPresentation: 'observed' });
+    recordLearnAnswer('I', 'I');
+    acknowledgeDisclaimer();
+
+    const state = loadState();
+    expect(state.settings.rrPresentation).toBe('observed');
+    expect(state.learnStats.answered).toBe(1);
+    expect(state.disclaimerAckVersion).toBe(DISCLAIMER_VERSION);
   });
 });

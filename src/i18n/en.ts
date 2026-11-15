@@ -89,6 +89,71 @@ export const en: Messages = {
   'vital.breathing.present': 'Present',
   'vital.breathing.absent': 'Absent',
 
+  // --- 学習モード (S2) ---
+  'learn.heading': 'Practice',
+  'learn.selectCategory': 'Choose the triage category for this casualty',
+  'learn.next': 'Next casualty',
+  'learn.correct': 'Correct',
+  'learn.incorrect': 'Incorrect',
+  'learn.yourAnswer': 'Your answer',
+  'learn.expectedAnswer': 'Correct category',
+  'learn.sessionStats': 'This session: {correct} of {answered} correct ({accuracy}%)',
+  'learn.totalStats': 'All time: {correct} of {answered} correct ({accuracy}%)',
+  'learn.shortcutHint': 'Keyboard: 1 / 2 / 3 / 0 to answer, Enter for next',
+
+  // --- 実測モード ---
+  'observation.heading': 'Observe the breathing',
+  'observation.instruction': 'Watch the chest and tap along with each breath.',
+  'observation.countingOptional': 'You may also decide without counting.',
+  'observation.tap': 'Count breaths',
+  'observation.reset': 'Start over',
+  'observation.elapsed': 'Elapsed',
+  'observation.elapsedValue': '{seconds} sec',
+  'observation.taps': 'Taps',
+  'observation.tapsValue': '{count}',
+  'observation.estimated': 'Estimate',
+  'observation.estimatedValue': 'About {rate} /min',
+  'observation.needMoreTaps': 'Keep counting to get an estimate',
+  'observation.openAirway': 'Open the airway',
+  'observation.airwayNotNeeded': 'Spontaneous breathing confirmed — no airway maneuver needed.',
+  'observation.airwayResumed': 'Breathing resumed after opening the airway.',
+  'observation.airwayNoBreathing': 'Still no breathing after opening the airway.',
+  'observation.reducedMotionFallback': 'Reduced motion is enabled, so the respiratory rate is shown as a number.',
+
+  // --- 解説の追加分 ---
+  'explain.heading': 'Why this answer',
+  'explain.countAccuracy': 'Your count {estimated} /min — actual {actual} /min (off by {delta})',
+  'explain.countExact': 'Your count {estimated} /min matches the actual rate.',
+  'explain.countNotAttempted': 'You did not count. The actual rate was {actual} /min.',
+  'explain.classificationCorrect': 'Your count was off, but you still judged "{band}" correctly.',
+  'explain.classificationWrong': 'The counting error changed your judgement of "{band}".',
+  'explain.bandLow': '{threshold} or below',
+  'explain.bandHigh': '{threshold} or above',
+  'explain.bandNormal': 'above {low} and below {high}',
+  'explain.agonalNote': 'This is agonal breathing. The chest is still moving, so spontaneous breathing is present, and a rate of {threshold} or below makes it Immediate.',
+
+  // --- 設定 (S6) ---
+  'settings.rrPresentation': 'Respiratory rate',
+  'settings.rrPresentation.numeric': 'Number',
+  'settings.rrPresentation.numeric.description': 'Shows the rate as a number. Trains the thresholds.',
+  'settings.rrPresentation.observed': 'Observe',
+  'settings.rrPresentation.observed.description': 'Watch the chest and count. Trains the field skill.',
+
+  // --- シェル・設定シート (S6) ---
+  'app.titleShort': 'START Triage',
+  'settings.heading': 'Settings',
+  'settings.open': 'Open settings',
+  'settings.close': 'Close',
+  'settings.disclaimer': 'Disclaimer and criteria',
+  'settings.stats': 'All-time results',
+  'disclaimer.heading': 'Please read before you start',
+  'disclaimer.acknowledge': 'I understand',
+  'feedback.heading': 'Result',
+  'feedback.showExplanation': 'Show explanation',
+  'flow.passed': 'Passed',
+  'flow.decided': 'Decided',
+  'flow.skipped': 'Not needed',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',
 

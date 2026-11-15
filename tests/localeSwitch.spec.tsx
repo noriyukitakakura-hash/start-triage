@@ -2,14 +2,28 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '@/app/App';
+import { SettingsProvider } from '@/app/SettingsProvider';
 import { I18nProvider } from '@/i18n';
 
+/** main.tsx と同じ Provider 構成で描画する */
 function renderApp() {
   return render(
     <I18nProvider>
-      <App />
+      <SettingsProvider>
+        <App />
+      </SettingsProvider>
     </I18nProvider>,
   );
+}
+
+/**
+ * 言語切替は設定シート内にある（SPEC §5.1 で出題画面から常時表示を外したため）。
+ * 初回は免責の確認ダイアログが出るので、先に確認してから設定を開く。
+ */
+async function openSettings(user: ReturnType<typeof userEvent.setup>) {
+  const acknowledge = screen.queryByRole('button', { name: '確認しました' });
+  if (acknowledge !== null) await user.click(acknowledge);
+  await user.click(screen.getByRole('button', { name: '設定を開く' }));
 }
 
 describe('言語切替 (docs/I18N.md §4)', () => {
@@ -24,12 +38,13 @@ describe('言語切替 (docs/I18N.md §4)', () => {
     const user = userEvent.setup();
     renderApp();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('START法トリアージ・トレーナー');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('START法トリアージ');
     expect(document.documentElement.lang).toBe('ja');
 
+    await openSettings(user);
     await user.click(screen.getByRole('button', { name: 'English' }));
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('START Triage Trainer');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('START Triage');
     expect(document.documentElement.lang).toBe('en');
   });
 
@@ -37,6 +52,7 @@ describe('言語切替 (docs/I18N.md §4)', () => {
     const user = userEvent.setup();
     renderApp();
 
+    await openSettings(user);
     await user.click(screen.getByRole('button', { name: 'English' }));
 
     const raw = localStorage.getItem('triage-start:v1');
@@ -48,6 +64,7 @@ describe('言語切替 (docs/I18N.md §4)', () => {
     const user = userEvent.setup();
     renderApp();
 
+    await openSettings(user);
     await user.click(screen.getByRole('button', { name: 'English' }));
 
     const stored = JSON.parse(localStorage.getItem('triage-start:v1') as string) as {
@@ -60,14 +77,20 @@ describe('言語切替 (docs/I18N.md §4)', () => {
     const user = userEvent.setup();
     renderApp();
 
+    await openSettings(user);
     await user.click(screen.getByRole('button', { name: 'English' }));
+    // 設定シートから免責・判定基準を開き直す
+    await user.click(screen.getByRole('button', { name: 'Disclaimer and criteria' }));
 
     expect(screen.getByText(/Japan Fire and Disaster Management Agency/)).toBeInTheDocument();
     expect(screen.getByText(/differ from the original US START/)).toBeInTheDocument();
   });
 
-  it('アクティブな言語ボタンが aria-pressed で示される', () => {
+  it('アクティブな言語ボタンが aria-pressed で示される', async () => {
+    const user = userEvent.setup();
     renderApp();
+
+    await openSettings(user);
     expect(screen.getByRole('button', { name: '日本語' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'false');
   });
