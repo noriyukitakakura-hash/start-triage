@@ -52,9 +52,9 @@ describe('loadState: v1 → v2 移行', () => {
     expect(settings.showTimer).toBe(false);
   });
 
-  it('v1 には存在しなかった rrPresentation は既定の numeric になる', () => {
+  it('v1 には存在しなかった rrPresentation は既定値になる', () => {
     writeRaw({ schemaVersion: 1, bestTimeMs: 1000, settings: { locale: 'ja' } });
-    expect(loadState().settings.rrPresentation).toBe('numeric');
+    expect(loadState().settings.rrPresentation).toBe(DEFAULT_SETTINGS.rrPresentation);
   });
 
   it('v1 の bestTimeMs が未設定でも落ちない', () => {
@@ -82,9 +82,9 @@ describe('loadState: 不正な値の検証', () => {
     expect(loadState().settings).toEqual(DEFAULT_SETTINGS);
   });
 
-  it('不正な rrPresentation は numeric に落ちる', () => {
+  it('不正な rrPresentation は既定値に落ちる', () => {
     writeRaw({ schemaVersion: 2, settings: { rrPresentation: 'telepathy' }, bestTimeMs: {} });
-    expect(loadState().settings.rrPresentation).toBe('numeric');
+    expect(loadState().settings.rrPresentation).toBe(DEFAULT_SETTINGS.rrPresentation);
   });
 
   it('不正な locale は既定に落ちる', () => {
@@ -198,6 +198,19 @@ describe('recordBestTime: 提示方式ごとに分離して記録する', () => 
     // 数値モードの速いタイムは、実測モードの記録と比較されない
     expect(recordBestTime('numeric', 60000)).toBe(true);
     expect(loadState().bestTimeMs.observed).toBe(180000);
+  });
+});
+
+describe('既定の提示方式（SPEC §2.2）', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('既定は実測モード。現場で必要な「見て判断する」技能を標準にする', () => {
+    expect(DEFAULT_SETTINGS.rrPresentation).toBe('observed');
+    expect(loadState().settings.rrPresentation).toBe('observed');
+  });
+
+  it('既定では呼吸数が閾値から離される（実測モードの制約が既定で効く）', () => {
+    expect(rrMarginFor(loadState().settings.rrPresentation)).toBe(OBSERVED_RR_MARGIN);
   });
 });
 

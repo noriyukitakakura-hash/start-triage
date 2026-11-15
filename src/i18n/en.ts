@@ -185,7 +185,7 @@ export const en: Messages = {
   'result.retry': 'Try again',
   'result.backHome': 'Home',
   'result.share': 'Post on X',
-  'result.shareHint': 'Available with a perfect score',
+  'result.shareHint': 'Available with a perfect score in observe mode',
   'result.suddenDeathEnded': 'Ended early on a wrong answer',
   'result.reviewHint': 'Tap a case to see its explanation',
   'result.mode.numeric': 'Number mode record',

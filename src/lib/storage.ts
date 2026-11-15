@@ -85,7 +85,9 @@ export const DEFAULT_SETTINGS: Settings = {
   boundaryRate: 0.35,
   suddenDeath: false,
   showTimer: true,
-  rrPresentation: 'numeric',
+  // 既定は実測。現場で必要なのは「見て判断する」技能であり、
+  // 数値を読む練習は設定で明示的に選ぶものとする（docs/OBSERVATION.md §2）
+  rrPresentation: 'observed',
 };
 
 export const DEFAULT_BEST_TIMES: BestTimes = { numeric: null, observed: null };

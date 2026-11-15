@@ -182,7 +182,7 @@ export const ja = {
   'result.retry': 'もう一度',
   'result.backHome': 'ホームへ',
   'result.share': 'Xに投稿する',
-  'result.shareHint': '全問正解で投稿できます',
+  'result.shareHint': '実測モードで全問正解すると投稿できます',
   'result.suddenDeathEnded': '誤答のため中断しました',
   'result.reviewHint': '各問をタップすると解説を見られます',
   'result.mode.numeric': '数値モードの記録',

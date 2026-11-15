@@ -15,7 +15,12 @@ import type { RrPresentation } from '@/lib/storage';
 /**
  * 10問チャレンジの結果（SPEC §2.4 / S4）。
  *
- * **X への投稿は全問正解のときだけ出す。** 達成の希少性が投稿の価値になる。
+ * **X への投稿は「実測モードで全問正解」のときだけ出す。**
+ * - 全問正解に限るのは、達成の希少性が投稿の価値になるため
+ * - 実測モードに限るのは、数値を読むだけの数値モードではタイムが短く、
+ *   かつ現場で必要な「見て判断する」技能を示さないため。
+ *   共有される記録は現場寄りの技能を表すものに揃える
+ *
  * タイムはクライアント計測で改ざん可能なため、自己申告の共有に留める（SPEC §1.7）。
  */
 export interface ResultScreenProps {
@@ -45,6 +50,8 @@ export function ResultScreen({
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const perfect = correct === total;
+  // 投稿は実測モードの全問正解に限る
+  const canShare = perfect && presentation === 'observed';
   const best = loadState().bestTimeMs[presentation];
   const reviewed = reviewIndex === null ? null : (answers[reviewIndex] ?? null);
 
@@ -114,7 +121,7 @@ export function ResultScreen({
       </div>
 
       <div className="shrink-0 space-y-1.5">
-        {perfect ? (
+        {canShare ? (
           <button
             type="button"
             onClick={share}

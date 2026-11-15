@@ -172,9 +172,36 @@ describe('自己ベストの記録（SPEC §2.4 / docs/OBSERVATION.md §3.6）',
       await user.click(screen.getByRole('button', { name: BUTTON_NAME['0'] }));
     }
 
+    expect(loadState().bestTimeMs.observed).toBeNull();
     expect(loadState().bestTimeMs.numeric).toBeNull();
     expect(screen.queryByRole('button', { name: 'Xに投稿する' })).not.toBeInTheDocument();
-    expect(screen.getByText('全問正解で投稿できます')).toBeInTheDocument();
+    expect(screen.getByText('実測モードで全問正解すると投稿できます')).toBeInTheDocument();
+  });
+});
+
+describe('X への投稿は実測モードの全問正解に限る（SPEC §2.5）', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+
+  it('数値モードでは全問正解でも投稿ボタンを出さない', async () => {
+    patchSettings({ rrPresentation: 'numeric' });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    wrap();
+    await startChallenge();
+
+    for (let i = 0; i < QUIZ_LENGTH; i++) {
+      const button = screen.queryByRole('button', { name: BUTTON_NAME.I });
+      if (button === null) break;
+      await user.click(button);
+    }
+
+    // 全問正解かどうかに関わらず、数値モードでは投稿できない
+    expect(screen.queryByRole('button', { name: 'Xに投稿する' })).not.toBeInTheDocument();
+    expect(screen.getByText('実測モードで全問正解すると投稿できます')).toBeInTheDocument();
+  });
+
+  it('自己ベストの記録自体は数値モードでも行う（投稿可否とは別）', () => {
+    recordBestTime('numeric', 50_000);
+    expect(loadState().bestTimeMs.numeric).toBe(50_000);
   });
 });
 
