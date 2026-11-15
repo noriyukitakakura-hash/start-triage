@@ -89,6 +89,9 @@ export const en: Messages = {
   'vital.breathing.present': 'Present',
   'vital.breathing.absent': 'Absent',
 
+  // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
+  'patient.figureLabel': 'Illustration of a casualty',
+
   // --- 状況文 ---
   'situation.walkedOnOwn': 'Walked over unaided when called',
   'situation.limpedOver': 'Limped over unaided',

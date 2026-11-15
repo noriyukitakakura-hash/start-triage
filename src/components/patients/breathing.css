@@ -1,0 +1,133 @@
+/*
+ * 胸郭の呼吸アニメーション（docs/OBSERVATION.md §4）
+ *
+ * CSS で駆動する理由:
+ * - コンポジタ駆動のため周期が正確。利用者のタップ数が真の呼吸数と一致しなければ
+ *   誤った数値を教えることになる
+ * - メインスレッドを占有せず、10問モードの performance.now() 計測を妨げない
+ *
+ * animation-duration は症例ごとにインラインで渡す（1呼吸周期の秒数、または死戦期呼吸のループ秒数）。
+ */
+
+.patient-figure .body,
+.patient-figure .torso {
+  fill: currentColor;
+}
+
+.patient-figure .torso {
+  /* 胸郭は動くため、動かない部位とわずかに差をつけて動きを視認しやすくする */
+  opacity: 0.88;
+}
+
+.patient-figure .limb {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.patient-figure .prop {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+
+.patient-figure .prop-fill {
+  fill: currentColor;
+  opacity: 0.22;
+}
+
+.patient-figure .ground {
+  stroke: currentColor;
+  stroke-linecap: round;
+  opacity: 0.25;
+}
+
+/*
+ * 胸郭。transform-box: fill-box により transform-origin を自身の
+ * バウンディングボックス基準にできるため、立位・臥位のどちらでも
+ * 「底辺（横隔膜・背面）を固定して上方へ膨らむ」という同一の規則で動かせる。
+ */
+.chest {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation-name: breathe;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.chest--agonal {
+  animation-name: breathe-agonal;
+  /* 喘ぎの立ち上がりを鋭くする */
+  animation-timing-function: ease-out;
+}
+
+/* 吸気 40% : 呼気 60%（I:E ≒ 1:1.5）。左右対称の正弦波は生理学的に不自然 */
+@keyframes breathe {
+  0% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(var(--breath-amp, 1.12));
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/*
+ * 死戦期呼吸。1ループに3回の喘ぎを不均等な間隔で配置する。
+ * ループ長を 3 × 呼吸周期 とすることで、見た目は不規則でも
+ * **平均レートは厳密に呼吸数と一致する**（docs/OBSERVATION.md §3.3）。
+ */
+@keyframes breathe-agonal {
+  /* 1回目: 鋭い喘ぎ */
+  0% {
+    transform: scaleY(1);
+  }
+  6% {
+    transform: scaleY(var(--breath-amp, 1.18));
+  }
+  17% {
+    transform: scaleY(1);
+  }
+  /* 長い休止 */
+  38% {
+    transform: scaleY(1);
+  }
+  /* 2回目 */
+  44% {
+    transform: scaleY(var(--breath-amp, 1.18));
+  }
+  55% {
+    transform: scaleY(1);
+  }
+  /* 短い休止 */
+  63% {
+    transform: scaleY(1);
+  }
+  /* 3回目 */
+  69% {
+    transform: scaleY(var(--breath-amp, 1.18));
+  }
+  80% {
+    transform: scaleY(1);
+  }
+  /* 休止してループへ */
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+/*
+ * 動きだけで情報を伝えない（SPEC §5.3 / docs/OBSERVATION.md §3.5）。
+ * アニメーションを止めたうえで、呼吸数を数値で提示する責務は表示層が負う。
+ */
+@media (prefers-reduced-motion: reduce) {
+  .chest {
+    animation: none;
+  }
+}

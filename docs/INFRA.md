@@ -137,8 +137,9 @@ Cloudflare DNS  (zone: keiku-labo.space)
 - **`index.html` と `sw.js` は `no-cache` が必須。**ここをキャッシュするとPWAの更新が配信されなくなる。
 - 外部リソース（CDN・Webフォント・解析タグ・外部画像）をゼロにする方針なので `default-src 'self'` が成立する。
   Xへの投稿は `window.open` によるトップレベル遷移なので、CSPの `connect-src` / `form-action` の制約を受けない。
-- `style-src` の `'unsafe-inline'` はVite/Tailwindが出す一部のインラインスタイル用。
-  ビルド結果を確認して不要なら削除する。
+- `style-src` の `'unsafe-inline'` は**必須**。呼吸アニメーションの周期（`animation-duration`）と
+  振幅（`--breath-amp`）を症例ごとに `style` 属性で渡すため（`docs/OBSERVATION.md` §3.2）。
+  CSP の `style-src` に指定した `'unsafe-inline'` はインラインの `style` 属性にも適用される。
 
 ### `public/_redirects`
 ```

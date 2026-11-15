@@ -86,6 +86,9 @@ export const ja = {
   'vital.breathing.present': 'あり',
   'vital.breathing.absent': 'なし',
 
+  // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
+  'patient.figureLabel': '傷病者のイラスト',
+
   // --- 状況文（domain/illustrations.ts のキー。SPEC §3.4） ---
   'situation.walkedOnOwn': '呼びかけに応じて自力で歩いてきた',
   'situation.limpedOver': '足を引きずりながら自力で歩いてきた',
