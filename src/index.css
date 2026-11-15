@@ -1,5 +1,26 @@
 @import 'tailwindcss';
 
+/*
+ * 角を落とさない方針（SPEC §5.1）。
+ *
+ * `rounded-*` ユーティリティを1つずつ消すのではなく、参照元の
+ * テーマ変数を 0 にする。箇所の数だけ消し漏れの危険が増えるのを避け、
+ * 今後追加するコンポーネントにも自動で効くようにするため。
+ *
+ * 傷病者イラストの角（胸郭・頭部・頸部）はここでは変えない。
+ * あちらは UI の装飾ではなく人体の形状であり、角張らせると不自然になる。
+ */
+@theme {
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
+}
+
 :root {
   color-scheme: dark light;
 }
@@ -56,8 +77,6 @@ body {
   max-width: 36rem;
   /* 画面の8割まで。背後の症例が見え続ける */
   max-height: 85dvh;
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
   background: var(--color-slate-800);
   color: var(--color-slate-100);
   box-shadow: 0 -8px 32px rgb(2 6 23 / 0.6);

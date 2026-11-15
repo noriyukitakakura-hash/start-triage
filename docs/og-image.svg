@@ -1,11 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#1e293b"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <!-- 単色の面で構成する。グラデーションは PNG の圧縮を著しく妨げる -->
+  <rect x="0" y="400" width="1200" height="230" fill="#111c33"/>
 
   <!-- トリアージ色の帯。色だけに依存せずローマ数字も入れる -->
   <g>
@@ -23,19 +19,19 @@
 
   <!-- 区分チップ -->
   <g font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="700" text-anchor="middle">
-    <rect x="80"  y="430" width="120" height="92" rx="16" fill="#dc2626"/>
+    <rect x="80"  y="430" width="120" height="92" fill="#dc2626"/>
     <text x="140" y="478" fill="#ffffff">I</text>
     <text x="140" y="508" font-size="18" fill="#fecaca">緊急</text>
 
-    <rect x="216" y="430" width="120" height="92" rx="16" fill="#fbbf24"/>
+    <rect x="216" y="430" width="120" height="92" fill="#fbbf24"/>
     <text x="276" y="478" fill="#0f172a">II</text>
     <text x="276" y="508" font-size="18" fill="#78350f">非緊急</text>
 
-    <rect x="352" y="430" width="120" height="92" rx="16" fill="#16a34a"/>
+    <rect x="352" y="430" width="120" height="92" fill="#16a34a"/>
     <text x="412" y="478" fill="#ffffff">III</text>
     <text x="412" y="508" font-size="18" fill="#bbf7d0">軽処置</text>
 
-    <rect x="488" y="430" width="120" height="92" rx="16" fill="#020617" stroke="#64748b" stroke-width="3"/>
+    <rect x="488" y="430" width="120" height="92" fill="#020617" stroke="#64748b" stroke-width="3"/>
     <text x="548" y="478" fill="#ffffff">0</text>
     <text x="548" y="508" font-size="18" fill="#94a3b8">死亡</text>
   </g>
