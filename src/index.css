@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: dark light;
+}
+
+/* 誤タップ由来のダブルタップズームと選択を抑止（SPEC §5.2） */
+button {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}

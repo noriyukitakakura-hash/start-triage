@@ -1,0 +1,2 @@
+# SPA のクライアントルーティング用 200 rewrite（docs/INFRA.md §5）
+/*  /index.html  200
