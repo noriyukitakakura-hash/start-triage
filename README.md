@@ -19,6 +19,7 @@
 | [`docs/SPEC.md`](docs/SPEC.md) | 企画・システム仕様（判定ロジック、症例ジェネレータ、画面、開発計画） |
 | [`docs/INFRA.md`](docs/INFRA.md) | サーバ構成（Cloudflare Pages、月額¥0の根拠、配信設定） |
 | [`docs/I18N.md`](docs/I18N.md) | 多言語対応（ja/en、対訳表、**言語と判定基準を独立させる原則**） |
+| [`docs/OBSERVATION.md`](docs/OBSERVATION.md) | 呼吸数の実測モード（胸郭アニメーション、観察時間と分解能、判別マージン±4の根拠） |
 
 ## 開発
 
@@ -46,6 +47,15 @@ Node は `.node-version`（22）に固定。CI・Cloudflare Pages も同バー�
    → キー・プレースホルダ・空文字を `tests/i18n.spec.ts` で検査。
 4. **外部リソースをロードしない。** CDN・Webフォント・解析タグ・外部画像を使わない。
    これにより `public/_headers` の `default-src 'self'` が成立し、オフライン動作も保証される。
+5. **呼吸アニメーションは厳密に毎分 `respiratoryRate` 回でなければならない。**
+   利用者のタップ数が真値とずれると誤った数値を教えることになる。CSS の `animation-duration`
+   で駆動し、`周期 × 呼吸数 === 60` をテストで保証している。
+   → `tests/breathing.spec.ts`、理由は `docs/OBSERVATION.md` §3.2。
+6. **実測モードでは気道確保ボタンを全症例に表示する。**
+   自発呼吸なしの症例だけに出すと、ボタンの有無が観察前に答えを漏らす。
+   → `docs/OBSERVATION.md` §3.1。
+7. **実測モードのタイムは数値モードと比較しない。** 自己ベストは提示方式ごとに分離して記録する。
+   → `docs/OBSERVATION.md` §3.6。
 
 ## 依存関係のメモ
 

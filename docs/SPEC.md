@@ -78,14 +78,27 @@
 ```
 - **歩行可否は画像で判断**。ただし「立っている＝歩行可能」とは限らないため、画像に加えて
   状況テキスト1行を必ず添え、判断の曖昧性を排除する（例: 立位イラスト＋「立っているが足が動かず歩けない」）。
-- **自発呼吸なしの症例のみ**、回答前に `気道確保を行う` ボタンを1回挟む。
+- **呼吸数の提示方式は2つある**（設定で切替。既定は数値モード）。詳細は `docs/OBSERVATION.md`。
+
+| 方式 | 呼吸数の提示 | 訓練する技能 |
+|---|---|---|
+| `numeric`（既定） | 数値（`呼吸 32 回/分`） | 閾値の正確な記憶（9/10・29/30 の線引き） |
+| `observed`（実測） | 胸郭アニメーション + タップ計数 | 現場の実務（見て「明らかに速い」と判断する） |
+
+- **数値モード**: 自発呼吸なしの症例のみ、回答前に `気道確保を行う` ボタンを1回挟む。
   押すと「気道確保後も自発呼吸なし」/「気道確保により呼吸再開（RR 14回/分）」が開示される。
   → これがないと I類（赤）と 0類（黒）の区別がテキスト読解になり、手技の順序が学習できない。
+- **実測モード**: `気道確保を行う` を**全症例に表示する。**
+  呼吸数の数値が出ないため、ボタンの有無が観察前に無呼吸であることを漏らしてしまう。
+  自発呼吸がある症例で押した場合は「自発呼吸を確認。気道確保は不要」と返し、判定は変えない。
+  実際のSTART法の手順（呼吸を確認し、なければ気道確保）にも忠実になる。
 - 回答ボタンは **色・ローマ数字・和文ラベルの3重符号化**（色覚多様性への配慮、§5.3）。
 
 ### 2.3 学習モード (S2)
 - 回答後に即時フィードバック: 正誤、正解区分、**判定が確定したステップのフローチャート上ハイライト**、解説文。
   - 解説文は生成した症例データから自動組み立て（例: 「歩行不能、呼吸数32回/分（30回以上）→ この時点で I類（赤）が確定。以降の評価は不要です。」）
+- 実測モードでは**計数精度と区分判定を分離して**提示する。
+  例: 「推定 34回/分 ／ 実際 36回/分（誤差 −2）→ 数え値はずれましたが、『30回以上』という判断は正しいです。」
 - 「次の症例」で即次へ。回数無制限。中断・再開自由。
 - セッション統計（出題数、正答率、区分別の誤答マトリクス）をlocalStorageに累積。
 
@@ -111,6 +124,9 @@
   > 不足時は **I類・II類側の確定ステップを境界値可能なものへ差し替える**（区分の構成比は維持する）。
   > I類4問すべてが気道確保を引くと上限3問となり下限に届かないため、この差し替えが必須である。
 - 結果画面: 10問の正誤一覧（各問の症例サマリと正解＋解説リンク）、合計タイム、自己ベスト更新表示。
+- **自己ベストは呼吸数の提示方式ごとに分けて記録する。**
+  実測モードは観察時間が支配的になるため、数値モードのタイムと比較できない。
+  単一の記録にすると比較不能なタイムを同じ記録として扱ってしまう（`docs/OBSERVATION.md` §3.6）。
 - **10/10 の場合のみ** `Xに投稿する` ボタンを表示。9/10以下では非表示（文言: 「全問正解で投稿できます」）。
 - サドンデス設定（既定OFF）: ONの場合、1問誤答した時点で即結果画面へ。
 
@@ -119,6 +135,7 @@
   `https://x.com/intent/post?text=<encoded>&url=<appUrl>&hashtags=<tags>`
   を `window.open(url, '_blank', 'noopener,noreferrer')` で開く。
 - 投稿URLには `?lang=<locale>` を付与し、投稿を見た人が投稿者と同じ言語で開けるようにする（I18N.md §7）。
+- 投稿文に**呼吸数の提示方式を明記する**。タイムの比較条件が異なるため（`docs/OBSERVATION.md` §3.6）。
 - 投稿文テンプレート（編集可能な状態でXの作成画面に渡る。言語別に用意）:
   ```
   START法トリアージ 10問チャレンジ 全問正解！
@@ -191,6 +208,20 @@
 | CRT | `crtSeconds` | 1.0–1.9 | 2.0–4.0 | 1.9, 2.0 |
 | 指示応答 | `obeysCommands` | `true` | `false` | — |
 
+> **実測モードでは呼吸数を判定閾値から 4 回以上離す（`rrMargin = 4`）。**
+> 観察して数える方式では分解能が観察時間に縛られ、±1 の真の境界値を判別できない。
+> 根拠と値域表は `docs/OBSERVATION.md` §2 を参照。
+>
+> | 帯 | 数値モード | 実測モード | 15秒観察時の呼吸回数 |
+> |---|---|---|---|
+> | 該当（下限） | 4–9 | **4–5** | 1.00–1.25 回 |
+> | 通過 | 10–29 | **14–25** | 3.50–6.25 回 |
+> | 該当（上限） | 30–44 | **34–44** | 8.50–11.00 回 |
+>
+> 歩行可能な症例（III類）の軽症域も通過域との交差を取る（14–20）。
+> 歩行可能なら呼吸数は評価されないが、実測モードでは利用者が胸郭の動きを見てしまうため、
+> **どの症例であれ閾値付近の曖昧な値を提示してはならない。**
+
 > **呼吸数の下限域は 4–9 とする（当初案の 0–9 から変更）。**
 > 呼吸数 0 は「自発呼吸あり」と矛盾するため、自発呼吸がある症例で生成してはならない。
 > 呼吸数 0 は `hasSpontaneousBreathing === false` の症例でのみ使う。
@@ -209,6 +240,10 @@
 
 ### 3.4 傷病者イラスト仕様
 - 形式: インラインSVG（React コンポーネント）。ピクトグラム＋簡易陰影の抽象表現。血液表現は最小限。
+- **全13種が胸郭アニメーションの契約に従う**（`docs/OBSERVATION.md` §5）。
+  胸郭を `class="chest"` のグループにまとめ、`animationDuration` に 1 呼吸周期の秒数を渡す。
+  `transform-origin` は横隔膜位置。吸気40%:呼気60%の非対称波形。
+  無呼吸の症例には `chest` クラスも `animationDuration` も付けない（**静止が手がかり**）。
 - バリエーション（最低12種）:
   - 歩行可: 自力歩行、やや足を引きずって歩行、腕を押さえて歩行、肩を貸されず自立歩行、立って手を挙げる
   - 歩行不可: 座り込み、仰臥位、腹臥位、瓦礫に下肢を挟まれる、壁にもたれて動けない、車内に閉じ込め、立位だが動けない
@@ -248,6 +283,7 @@ triage-start/
 │  │  ├─ types.ts                  # Category, TriageCase, DecidingStep, RuleProfile
 │  │  ├─ profiles.ts               # JP-FDMA 基準値テーブル
 │  │  ├─ judge.ts                  # judge(case, profile) => { category, decidingStep, rationale }
+│  │  ├─ breathing.ts              # 呼吸パターン分類・周期・タップ計数の換算（OBSERVATION.md §7）
 │  │  ├─ generator.ts              # generateCase(target, opts, rng) / generateQuizSet()
 │  │  ├─ rng.ts                    # シード付きPRNG（再現可能なテスト用）
 │  │  └─ explain.ts                # 症例＋判定結果 → 解説文の組み立て
@@ -264,6 +300,7 @@ triage-start/
 │  │  ├─ FlowChart.tsx             # 判定ステップをハイライト可能なSVGフロー図
 │  │  ├─ Timer.tsx
 │  │  ├─ LocaleSwitch.tsx         # ヘッダの言語切替
+│  │  ├─ BreathCounter.tsx        # 実測モードのタップ計数UI
 │  │  └─ patients/                 # 傷病者イラストSVGコンポーネント群 + カタログ
 │  ├─ i18n/                        # 多言語（詳細は docs/I18N.md §10）
 │  │  ├─ index.tsx                # LocaleProvider / useI18n / t()
@@ -282,7 +319,9 @@ triage-start/
 └─ tests/
    ├─ judge.spec.ts                # 境界値テーブル駆動
    ├─ generator.spec.ts            # 不変条件テスト（10,000回ループ）
+   ├─ breathing.spec.ts            # 呼吸パターン・周期・計数換算
    ├─ quizset.spec.ts              # 出題構成比率
+   ├─ storage.spec.ts              # スキーマ v1→v2 移行と値の検証
    ├─ share.spec.ts                # Intent URL のエンコード
    └─ i18n.spec.ts                 # ja/en のキー集合・プレースホルダ一致（I18N.md §9）
 ```
@@ -333,15 +372,20 @@ export class InconsistentCaseError extends Error {}
 ```ts
 // key: "triage-start:v1"
 {
-  schemaVersion: 1,
-  bestTimeMs: number | null,
+  schemaVersion: 2,
+  // 提示方式ごとに分離。実測モードのタイムは数値モードと比較できない
+  bestTimeMs: { numeric: number | null; observed: number | null },
   challengeHistory: Array<{ at: string; correct: number; timeMs: number; posted: boolean }>, // 直近50件
   learnStats: { total: number; correct: number; confusion: Record<Category, Record<Category, number>> },
-  settings: { locale: 'ja' | 'en'; profile: 'JP-FDMA'; boundaryRate: number; suddenDeath: boolean; showTimer: boolean }
+  settings: { locale: 'ja' | 'en'; profile: 'JP-FDMA'; boundaryRate: number; suddenDeath: boolean;
+             showTimer: boolean; rrPresentation: 'numeric' | 'observed' }
   // locale と profile は独立。言語切替で判定基準を変えてはならない（I18N.md §2）
 }
 ```
 `schemaVersion` 不一致時はマイグレーションまたは破棄（破棄時は確認ダイアログなしで初期化、ただし次回起動時に通知）。
+
+**v1 → v2 移行**: 旧 `bestTimeMs: number` を `{ numeric: 値, observed: null }` に変換する。
+設定はそのまま引き継げるため破棄しない。未知の将来バージョンは解釈できないため既定値へ落とす。
 
 ### 4.5 非機能要件
 | 項目 | 目標 |
@@ -374,6 +418,8 @@ export class InconsistentCaseError extends Error {}
 - 症例情報は `<dl>` 構造でスクリーンリーダー読み上げ可能、イラストの `aria-label` は答えを漏らさない
 - 結果画面の正誤は記号＋テキストで表現
 - 言語切替時に `document.documentElement.lang` を更新し、スクリーンリーダーの読み上げ言語を追従させる
+- **動きだけで情報を伝えない。** `prefers-reduced-motion: reduce` の場合、実測モードの呼吸数提示を
+  自動的に数値へフォールバックし、フォールバックしたことを画面に表示する（`docs/OBSERVATION.md` §3.5）
 
 ---
 
@@ -383,9 +429,9 @@ export class InconsistentCaseError extends Error {}
 |---|---|---|
 | P0 | 雛形構築（Vite+TS+Tailwind+Vitest+CI）+ i18n基盤 | `npm run dev` が動き、ja/en が切替できる |
 | P1 | **ドメイン層**: `judge` / `generator` / `explain` + テスト | 境界値テスト全緑、不変条件テスト10,000回通過 |
-| P2 | 傷病者SVGイラスト12種 + カタログ | `patients/` 完成 |
-| P3 | 学習モード (S2) + CaseCard / FlowChart | 1人で学習が完結する |
-| P4 | 10問連続モード (S3/S4) + タイマー + localStorage | 自己ベストが残る |
+| P2 | 傷病者SVGイラスト13種 + 呼吸アニメーション4パターン + reduced-motion対応 | `patients/` 完成、胸郭が呼吸数どおりに動く |
+| P3 | 学習モード (S2) + CaseCard / FlowChart + 実測モードのタップ計数UI | 1人で学習が完結し、実測で数えられる |
+| P4 | 10問連続モード (S3/S4) + タイマー + localStorage | 提示方式ごとに自己ベストが残る |
 | P5 | Xポスト + OGP + リファレンス(S5) + 設定(S6) + 全文翻訳の完成 | 共有が機能し、ja/en が全画面で揃う |
 | P6 | PWA化、a11y監査、実機確認、デプロイ | 公開URL |
 
@@ -401,6 +447,9 @@ export class InconsistentCaseError extends Error {}
 | タイムの改ざん（DevTools等） | 自己申告SNS共有に限定。ランキング非実装を明言 |
 | 医療行為の誤解 | 恒久的な免責表示。実臨床判断への適用を否定する文言 |
 | 境界値ばかりで現場感を失う | 境界値出題率を設定可能に（既定35%）。残りは余裕のある値域から生成 |
+| 実測モードで利用者が「数えられない」と感じて離脱する | 観察時間は無制限、タップ計数は回答の前提条件にしない。数えずに判断してよい |
+| 実測モードのタイムを数値モードと比較してしまう | 自己ベストを提示方式ごとに分離。X ポスト文にもモードを明記 |
+| アニメーションの周期がずれ、誤った呼吸数を教える | CSS の `animation-duration` で駆動（コンポジタ駆動）。`周期 × 呼吸数 === 60` をテストで保証 |
 | X Web Intent の仕様変更 | `share.ts` に隔離。Web Share API へのフォールバックを用意 |
 | 英語UIの利用者が米国版STARTの基準で採点されていると誤解し、誤った基準を習得する | **言語と `RuleProfile` を完全に独立させる。**英語UIでも採用基準が `JP-FDMA` であることを免責とS5に常時表示（I18N.md §2） |
 

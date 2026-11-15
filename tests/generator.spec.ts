@@ -312,3 +312,167 @@ describe('generator: 別プロファイルでも不変条件を満たす', () =>
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// 実測モード: 呼吸数の判別マージン（docs/OBSERVATION.md）
+// ---------------------------------------------------------------------------
+
+const OBSERVED_MARGIN = 4;
+
+describe('generator: 実測モードの呼吸数マージン', () => {
+  it(`${ITERATIONS.toLocaleString()}回: 全症例の呼吸数が閾値から ${OBSERVED_MARGIN} 以上離れている`, () => {
+    const rng = createRng('rr-margin-invariant');
+    const failures: string[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const g = generateCase(
+        { target: combo.target, decidingStep: combo.decidingStep, rrMargin: OBSERVED_MARGIN },
+        rng,
+      );
+      const rr = g.case.respiratoryRate;
+
+      // 無呼吸症例（呼吸数0）はマージンの対象外。閾値判定を経ないため
+      if (!g.case.hasSpontaneousBreathing) continue;
+      if (rr === null) {
+        failures.push(`#${i} 呼吸ありなのに呼吸数が null`);
+        continue;
+      }
+
+      const lowDistance = Math.abs(rr - JP_FDMA.respiratoryRateLowMax);
+      const highDistance = Math.abs(rr - JP_FDMA.respiratoryRateHighMin);
+      // 閾値そのもの（9, 30）と、その直近 margin-1 回分の値を取らない
+      if (lowDistance < OBSERVED_MARGIN && highDistance < OBSERVED_MARGIN) {
+        failures.push(`#${i} rr=${rr} が両閾値に近すぎる`);
+      } else if (lowDistance < OBSERVED_MARGIN || highDistance < OBSERVED_MARGIN) {
+        failures.push(`#${i} rr=${rr} が閾値に近すぎる (low差${lowDistance} high差${highDistance})`);
+      }
+    }
+
+    expect(failures.slice(0, 5)).toEqual([]);
+    expect(failures).toHaveLength(0);
+  });
+
+  it(`${ITERATIONS.toLocaleString()}回: マージンを入れても judge の結果が target と一致する`, () => {
+    const rng = createRng('rr-margin-judge');
+    const failures: string[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const g = generateCase(
+        { target: combo.target, decidingStep: combo.decidingStep, rrMargin: OBSERVED_MARGIN },
+        rng,
+      );
+      const j = judge(g.case, JP_FDMA);
+      if (j.category !== combo.target || j.decidingStep !== combo.decidingStep) {
+        failures.push(`#${i} 意図=${combo.target}/${combo.decidingStep} 実際=${j.category}/${j.decidingStep}`);
+      }
+    }
+
+    expect(failures.slice(0, 5)).toEqual([]);
+    expect(failures).toHaveLength(0);
+  });
+
+  it('マージンを入れても症例データ自体に矛盾がない', () => {
+    const rng = createRng('rr-margin-consistency');
+    for (let i = 0; i < 3000; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      assertInternallyConsistent(
+        generateCase(
+          { target: combo.target, decidingStep: combo.decidingStep, rrMargin: OBSERVED_MARGIN },
+          rng,
+        ),
+      );
+    }
+  });
+
+  it('値域が設計どおり（通過14〜25 / 該当下限4〜5 / 該当上限34〜44）', () => {
+    const rng = createRng('rr-margin-bands');
+    const pass = new Set<number>();
+    const failLow = new Set<number>();
+    const failHigh = new Set<number>();
+
+    for (let i = 0; i < 6000; i++) {
+      // 通過側: 意識で確定する症例
+      const p = generateCase({ target: 'II', rrMargin: OBSERVED_MARGIN }, rng).case.respiratoryRate;
+      if (p !== null) pass.add(p);
+
+      // 該当側: 呼吸数で確定する症例
+      const f = generateCase(
+        { target: 'I', decidingStep: 'respiratoryRate', rrMargin: OBSERVED_MARGIN },
+        rng,
+      ).case.respiratoryRate;
+      if (f === null) continue;
+      if (f <= JP_FDMA.respiratoryRateLowMax) failLow.add(f);
+      else failHigh.add(f);
+    }
+
+    expect(Math.min(...pass)).toBe(14);
+    expect(Math.max(...pass)).toBe(25);
+    expect(Math.min(...failLow)).toBe(4);
+    expect(Math.max(...failLow)).toBe(5);
+    expect(Math.min(...failHigh)).toBe(34);
+    expect(Math.max(...failHigh)).toBe(44);
+  });
+
+  it('15秒の観察で3帯が分離する（呼吸回数が重ならない）', () => {
+    // 該当下限 5回/分 → 1.25回、通過 14〜25回/分 → 3.5〜6.25回、該当上限 34回/分 → 8.5回
+    const at15s = (rr: number) => (rr * 15) / 60;
+    expect(at15s(5)).toBeLessThan(at15s(14));
+    expect(at15s(25)).toBeLessThan(at15s(34));
+    // 帯の間に1回以上の差があり、数え間違い1回では区分が反転しない
+    expect(at15s(14) - at15s(5)).toBeGreaterThan(1);
+    expect(at15s(34) - at15s(25)).toBeGreaterThan(1);
+  });
+
+  it('呼吸数ステップの usedBoundary は実測モードでは常に false', () => {
+    const rng = createRng('rr-margin-no-boundary');
+    for (let i = 0; i < 3000; i++) {
+      const g = generateCase(
+        { target: 'I', decidingStep: 'respiratoryRate', rrMargin: OBSERVED_MARGIN, boundaryRate: 1 },
+        rng,
+      );
+      expect(g.usedBoundary).toBe(false);
+    }
+  });
+
+  it('通過側の呼吸数も境界値（10・29）を取らない', () => {
+    const rng = createRng('rr-margin-pass-no-boundary');
+    for (let i = 0; i < 3000; i++) {
+      const rr = generateCase(
+        { target: 'II', rrMargin: OBSERVED_MARGIN, boundaryRate: 1 },
+        rng,
+      ).case.respiratoryRate;
+      expect(rr).not.toBe(10);
+      expect(rr).not.toBe(29);
+    }
+  });
+
+  it('循環・意識の境界値は実測モードでも有効（呼吸数以外は影響を受けない）', () => {
+    const rng = createRng('rr-margin-other-boundaries');
+    for (let i = 0; i < 500; i++) {
+      const circ = generateCase(
+        { target: 'I', decidingStep: 'circulation', rrMargin: OBSERVED_MARGIN, boundaryRate: 1 },
+        rng,
+      );
+      expect(circ.usedBoundary).toBe(true);
+      expect(circ.case.crtSeconds).toBe(JP_FDMA.crtThresholdSeconds);
+
+      const cons = generateCase(
+        { target: 'II', decidingStep: 'consciousness', rrMargin: OBSERVED_MARGIN, boundaryRate: 1 },
+        rng,
+      );
+      expect(cons.usedBoundary).toBe(true);
+      expect(cons.case.crtSeconds).toBe(1.9);
+    }
+  });
+
+  it('マージンが大きすぎて通過域が空になる場合はエラー', () => {
+    const rng = createRng('rr-margin-too-large');
+    // 通過域 10〜29 に対し margin 10 で [20, 19] となり空
+    expect(() => generateCase({ target: 'II', rrMargin: 10 }, rng)).toThrow(RangeError);
+  });
+});

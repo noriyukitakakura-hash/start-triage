@@ -46,6 +46,14 @@ export interface GenerateOptions {
   decidingStep?: DecidingStep;
   /** 境界値を出す確率 0..1（既定 0.35。SPEC §3.3） */
   boundaryRate?: number;
+  /**
+   * 呼吸数を判定閾値からこの回数以上離す（既定 0 = 制約なし）。
+   *
+   * 実測モード（胸郭アニメーションを数える）で使う。観察して数える方式では
+   * 分解能が観察時間に縛られ、±1 の真の境界値を判別できないため、
+   * 判別可能なマージンを確保する必要がある。詳細は docs/OBSERVATION.md
+   */
+  rrMargin?: number;
   profile?: RuleProfile;
   id?: string;
 }
@@ -64,6 +72,10 @@ export const DEFAULT_BOUNDARY_RATE = 0.35;
 const MIN_BREATHING_RR = 4;
 /** 呼吸数の上限域の幅 */
 const RR_HIGH_SPAN = 14;
+/** 呼吸数の絶対上限。マージンを足しても超えない */
+const RR_ABS_MAX = 44;
+/** 歩行可能な症例（III類）の軽症域。通過域との交差を取って使う */
+const RR_MILD_RANGE: readonly [number, number] = [12, 20];
 const CRT_MIN = 1.0;
 const CRT_MAX = 4.0;
 const CRT_STEP = 0.1;
@@ -111,28 +123,53 @@ function circulationFree(rng: Rng, profile: RuleProfile): Circulation {
   return { radialPulsePalpable: true, pulseRate, crtSeconds: rng.decimal(crtMin, CRT_MAX, CRT_STEP) };
 }
 
-function rrPassRange(profile: RuleProfile): [number, number] {
-  return [profile.respiratoryRateLowMax + 1, profile.respiratoryRateHighMin - 1];
+function rrPassRange(profile: RuleProfile, margin: number): [number, number] {
+  return [profile.respiratoryRateLowMax + 1 + margin, profile.respiratoryRateHighMin - 1 - margin];
 }
 
 /** 呼吸数ステップを「通過」する値 */
-function rrPass(rng: Rng, profile: RuleProfile, boundary: boolean): number {
-  const [min, max] = rrPassRange(profile);
-  if (boundary) return rng.chance(0.5) ? min : max;
+function rrPass(rng: Rng, profile: RuleProfile, boundary: boolean, margin: number): number {
+  const [min, max] = rrPassRange(profile, margin);
+  if (max < min) {
+    throw new RangeError(
+      `rrMargin ${margin} が大きすぎる: 呼吸数の通過域が空になる（${min}..${max}）`,
+    );
+  }
+  // margin > 0 のときは境界値を取らない（閾値から margin 以上離す制約が優先される）
+  if (boundary && margin === 0) return rng.chance(0.5) ? min : max;
+  return rng.int(min, max);
+}
+
+/**
+ * 歩行可能な症例（III類）の呼吸数。軽症域と通過域の交差から抽選する。
+ *
+ * 歩行可能なら呼吸数は評価されないが、**実測モードでは利用者が胸郭の動きを見てしまう**。
+ * どの症例であれ閾値付近の曖昧な値を提示してはならないため、マージンを尊重する。
+ */
+function rrMild(rng: Rng, profile: RuleProfile, margin: number): number {
+  const [passMin, passMax] = rrPassRange(profile, margin);
+  const min = Math.max(RR_MILD_RANGE[0], passMin);
+  const max = Math.min(RR_MILD_RANGE[1], passMax);
+  if (max < min) {
+    throw new RangeError(`rrMargin ${margin} が大きすぎる: 軽症域が空になる（${min}..${max}）`);
+  }
   return rng.int(min, max);
 }
 
 /** 呼吸数ステップに「該当」する値。下限域と上限域から選ぶ */
-function rrFail(rng: Rng, profile: RuleProfile, boundary: boolean): number {
-  const lowAvailable = profile.respiratoryRateLowMax >= MIN_BREATHING_RR;
+function rrFail(rng: Rng, profile: RuleProfile, boundary: boolean, margin: number): number {
+  const lowMax = profile.respiratoryRateLowMax - margin;
+  const lowAvailable = lowMax >= MIN_BREATHING_RR;
   const useLow = lowAvailable && rng.chance(0.4);
 
   if (useLow) {
-    return boundary ? profile.respiratoryRateLowMax : rng.int(MIN_BREATHING_RR, profile.respiratoryRateLowMax);
+    if (boundary && margin === 0) return profile.respiratoryRateLowMax;
+    return rng.int(MIN_BREATHING_RR, lowMax);
   }
-  return boundary
-    ? profile.respiratoryRateHighMin
-    : rng.int(profile.respiratoryRateHighMin, profile.respiratoryRateHighMin + RR_HIGH_SPAN);
+
+  const highMin = profile.respiratoryRateHighMin + margin;
+  if (boundary && margin === 0) return profile.respiratoryRateHighMin;
+  return rng.int(highMin, Math.max(highMin, Math.min(highMin + RR_HIGH_SPAN, RR_ABS_MAX)));
 }
 
 /**
@@ -143,6 +180,7 @@ function rrFail(rng: Rng, profile: RuleProfile, boundary: boolean): number {
 export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase {
   const profile = options.profile ?? JP_FDMA;
   const boundaryRate = options.boundaryRate ?? DEFAULT_BOUNDARY_RATE;
+  const rrMargin = options.rrMargin ?? 0;
   const target = options.target;
 
   const decidingStep = options.decidingStep ?? rng.pick(decidingStepsFor(target));
@@ -163,7 +201,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         canWalk: true,
         hasSpontaneousBreathing: true,
         breathingAfterAirway: null,
-        respiratoryRate: rng.int(12, 20),
+        respiratoryRate: rrMild(rng, profile, rrMargin),
         radialPulsePalpable: true,
         pulseRate: rng.int(70, 100),
         crtSeconds: rng.decimal(CRT_MIN, Number((profile.crtThresholdSeconds - CRT_STEP).toFixed(1)), CRT_STEP),
@@ -200,7 +238,8 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
 
   // --- 手順3: 呼吸数 ---
   if (decidingStep === 'respiratoryRate') {
-    const boundary = rng.chance(boundaryRate);
+    // margin > 0 では閾値から離す制約が優先されるため、境界値は取り得ない
+    const boundary = rrMargin === 0 && rng.chance(boundaryRate);
     const circulation = circulationFree(rng, profile);
     return {
       case: {
@@ -209,7 +248,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         canWalk: false,
         hasSpontaneousBreathing: true,
         breathingAfterAirway: null,
-        respiratoryRate: rrFail(rng, profile, boundary),
+        respiratoryRate: rrFail(rng, profile, boundary, rrMargin),
         ...circulation,
         obeysCommands: rng.chance(0.5),
       },
@@ -221,7 +260,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
 
   // 呼吸数ステップは通過させる。通過側の値にも独立に境界値バイアスをかける
   // （RR 29 を通過させてから循環で確定する症例は難度が高く、教育価値がある）
-  const respiratoryRate = rrPass(rng, profile, rng.chance(boundaryRate));
+  const respiratoryRate = rrPass(rng, profile, rrMargin === 0 && rng.chance(boundaryRate), rrMargin);
 
   // --- 手順4: 循環 ---
   if (decidingStep === 'circulation') {
@@ -275,6 +314,8 @@ export const QUIZ_MIN_BOUNDARY = 4;
 export interface QuizSetOptions {
   boundaryRate?: number;
   profile?: RuleProfile;
+  /** 実測モードの呼吸数マージン（既定 0）。docs/OBSERVATION.md */
+  rrMargin?: number;
 }
 
 /**
@@ -286,11 +327,12 @@ export interface QuizSetOptions {
 export function generateQuizSet(rng: Rng, options: QuizSetOptions = {}): GeneratedCase[] {
   const profile = options.profile ?? JP_FDMA;
   const boundaryRate = options.boundaryRate ?? DEFAULT_BOUNDARY_RATE;
+  const rrMargin = options.rrMargin ?? 0;
 
   const targets = [...QUIZ_COMPOSITION, rng.pick(['I', 'II', 'III', '0'] as const)];
 
   const items = rng.shuffle(targets).map((target, index) =>
-    generateCase({ target, boundaryRate, profile, id: `quiz-${index + 1}` }, rng),
+    generateCase({ target, boundaryRate, profile, rrMargin, id: `quiz-${index + 1}` }, rng),
   );
 
   // 境界値症例が不足していれば境界値に差し替える。**区分の構成比は維持する**（target は変えない）。
@@ -298,19 +340,25 @@ export function generateQuizSet(rng: Rng, options: QuizSetOptions = {}): Generat
   // III類は walk、0類は airway でしか確定せず、どちらも真偽値判定なので境界値を持ち得ない。
   // そのため境界値の下限を満たすには、I類・II類側で確定ステップを境界値可能なものへ
   // 差し替える必要がある（I類4問すべてが airway を引くと上限3問で下限に届かない）。
+  //
+  // 実測モード（rrMargin > 0）では呼吸数も境界値を取れなくなり、
+  // 境界値可能なステップは循環・意識のみになる。それでも
+  // I類4問 + II類2問 = 6問 ≧ QUIZ_MIN_BOUNDARY なので下限は達成できる。
   let boundaryCount = items.filter((i) => i.usedBoundary).length;
   for (let i = 0; i < items.length && boundaryCount < QUIZ_MIN_BOUNDARY; i++) {
     const item = items[i];
     if (item === undefined || item.usedBoundary) continue;
 
-    const capableSteps = boundaryCapableStepsFor(item.target);
+    const capableSteps = boundaryCapableStepsFor(item.target, rrMargin);
     if (capableSteps.length === 0) continue; // III類・0類は対象外
 
     // 元の確定ステップが境界値を取れるならそれを維持し、取れないなら取れるものへ差し替える
-    const decidingStep = canUseBoundary(item.decidingStep) ? item.decidingStep : rng.pick(capableSteps);
+    const decidingStep = canUseBoundary(item.decidingStep, rrMargin)
+      ? item.decidingStep
+      : rng.pick(capableSteps);
 
     items[i] = generateCase(
-      { target: item.target, decidingStep, boundaryRate: 1, profile, id: item.case.id },
+      { target: item.target, decidingStep, boundaryRate: 1, profile, rrMargin, id: item.case.id },
       rng,
     );
     boundaryCount++;
@@ -319,12 +367,18 @@ export function generateQuizSet(rng: Rng, options: QuizSetOptions = {}): Generat
   return items;
 }
 
-/** 境界値を取り得る確定ステップか（歩行・気道確保は真偽値判定なので境界値が存在しない） */
-export function canUseBoundary(step: DecidingStep): boolean {
-  return step === 'respiratoryRate' || step === 'circulation' || step === 'consciousness';
+/**
+ * 境界値を取り得る確定ステップか。
+ *
+ * 歩行・気道確保は真偽値判定なので境界値が存在しない。
+ * 実測モード（`rrMargin > 0`）では呼吸数も、閾値から離す制約が優先されるため境界値を取れない。
+ */
+export function canUseBoundary(step: DecidingStep, rrMargin = 0): boolean {
+  if (step === 'respiratoryRate') return rrMargin === 0;
+  return step === 'circulation' || step === 'consciousness';
 }
 
 /** その区分で境界値を取り得る確定ステップ。III類・0類では空になる */
-export function boundaryCapableStepsFor(target: Category): DecidingStep[] {
-  return decidingStepsFor(target).filter(canUseBoundary);
+export function boundaryCapableStepsFor(target: Category, rrMargin = 0): DecidingStep[] {
+  return decidingStepsFor(target).filter((step) => canUseBoundary(step, rrMargin));
 }
