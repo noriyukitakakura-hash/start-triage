@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MIN_TAPS_FOR_ESTIMATE, computeCount } from '@/components/BreathCounter';
+import { MIN_TAPS_FOR_ESTIMATE, computeCount } from '@/domain/tapCounting';
 import { MIN_ESTIMATE_MS } from '@/domain/breathing';
 
 /** 呼吸数 rr で等間隔に n 回タップした時刻列 */

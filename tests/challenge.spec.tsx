@@ -183,7 +183,7 @@ describe('X への投稿は実測モードの全問正解に限る（SPEC §2.5�
   beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
 
   it('数値モードでは全問正解でも投稿ボタンを出さない', async () => {
-    patchSettings({ rrPresentation: 'numeric' });
+    patchSettings({ vitalsPresentation: 'numeric' });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     wrap();
     await startChallenge();

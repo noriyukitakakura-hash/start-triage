@@ -133,11 +133,11 @@ export const en: Messages = {
   'explain.agonalNote': 'This is agonal breathing. The chest is still moving, so spontaneous breathing is present, and a rate of {threshold} or below makes it Immediate.',
 
   // --- 設定 (S6) ---
-  'settings.rrPresentation': 'Respiratory rate',
-  'settings.rrPresentation.numeric': 'Number',
-  'settings.rrPresentation.numeric.description': 'Shows the rate as a number. Trains the thresholds.',
-  'settings.rrPresentation.observed': 'Observe',
-  'settings.rrPresentation.observed.description': 'Watch the chest and count. Trains the field skill.',
+  'settings.vitalsPresentation': 'Respiratory rate',
+  'settings.vitalsPresentation.numeric': 'Number',
+  'settings.vitalsPresentation.numeric.description': 'Shows the rate as a number. Trains the thresholds.',
+  'settings.vitalsPresentation.observed': 'Observe',
+  'settings.vitalsPresentation.observed.description': 'Watch the chest and count. Trains the field skill.',
 
   // --- シェル・設定シート (S6) ---
   'app.titleShort': 'START Triage',
@@ -224,6 +224,40 @@ export const en: Messages = {
   'share.mode.numeric': 'number mode',
   'share.mode.observed': 'observe mode',
   'share.hashtags': 'STARTtriage,DisasterMedicine,MassCasualty',
+
+  // --- CRT の実測 ---
+  'crt.heading': 'Capillary refill time',
+  'crt.instruction': 'Press the nail for {seconds} seconds, release, and time how long the colour takes to return.',
+  'crt.press': 'Press the nail',
+  'crt.pressing': 'Keep pressing — {seconds}s left',
+  'crt.tooShort': 'Hold for {seconds} seconds. Without enough pressure the measurement is not valid.',
+  'crt.watching': 'Tap when the colour has returned',
+  'crt.reportReturned': 'Colour has returned',
+  'crt.measured': 'Measured {seconds} sec',
+  'crt.retry': 'Measure again',
+  'crt.notMeasured': 'Not measured',
+
+  // --- 脈拍の実測 ---
+  'pulse.heading': 'Radial pulse',
+  'pulse.instruction': 'Feel the radial pulse at the wrist and tap along with each beat.',
+  'pulse.tap': 'Count beats',
+  'pulse.notPalpable': 'No pulse felt',
+  'pulse.palpable': 'Pulse felt',
+  'pulse.measured': '{rate} /min',
+  'pulse.notMeasured': 'Not measured',
+  'pulse.measure': 'Palpate',
+
+  // --- アナログ時計 ---
+  'clock.elapsed': 'Elapsed time',
+
+  // --- 解説の追加分 ---
+  'explain.crtAccuracy': 'CRT measured {measured}s — actual {actual}s (off by {delta})',
+  'explain.crtExact': 'CRT measured {measured}s, matching the actual value.',
+  'explain.crtNotMeasured': 'You did not measure CRT. The actual value was {actual}s.',
+  'explain.crtBandCorrect': 'Your measurement was off, but you still judged "{band}" correctly.',
+  'explain.crtBandWrong': 'The measurement error changed your judgement of "{band}".',
+  'explain.crtBandDelayed': '{threshold} sec or more',
+  'explain.crtBandWithinRange': 'under {threshold} sec',
 
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',

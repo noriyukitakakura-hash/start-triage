@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MEASURED_CRT_MARGIN } from '@/domain/circulation';
 import {
   DEFAULT_BEST_TIMES,
   DEFAULT_SETTINGS,
   OBSERVED_RR_MARGIN,
+  crtMarginFor,
   isRrPresentation,
   loadState,
   DISCLAIMER_VERSION,
@@ -54,7 +56,7 @@ describe('loadState: v1 → v2 移行', () => {
 
   it('v1 には存在しなかった rrPresentation は既定値になる', () => {
     writeRaw({ schemaVersion: 1, bestTimeMs: 1000, settings: { locale: 'ja' } });
-    expect(loadState().settings.rrPresentation).toBe(DEFAULT_SETTINGS.rrPresentation);
+    expect(loadState().settings.vitalsPresentation).toBe(DEFAULT_SETTINGS.vitalsPresentation);
   });
 
   it('v1 の bestTimeMs が未設定でも落ちない', () => {
@@ -83,8 +85,8 @@ describe('loadState: 不正な値の検証', () => {
   });
 
   it('不正な rrPresentation は既定値に落ちる', () => {
-    writeRaw({ schemaVersion: 2, settings: { rrPresentation: 'telepathy' }, bestTimeMs: {} });
-    expect(loadState().settings.rrPresentation).toBe(DEFAULT_SETTINGS.rrPresentation);
+    writeRaw({ schemaVersion: 2, settings: { vitalsPresentation: 'telepathy' }, bestTimeMs: {} });
+    expect(loadState().settings.vitalsPresentation).toBe(DEFAULT_SETTINGS.vitalsPresentation);
   });
 
   it('不正な locale は既定に落ちる', () => {
@@ -205,12 +207,46 @@ describe('既定の提示方式（SPEC §2.2）', () => {
   beforeEach(() => localStorage.clear());
 
   it('既定は実測モード。現場で必要な「見て判断する」技能を標準にする', () => {
-    expect(DEFAULT_SETTINGS.rrPresentation).toBe('observed');
-    expect(loadState().settings.rrPresentation).toBe('observed');
+    expect(DEFAULT_SETTINGS.vitalsPresentation).toBe('observed');
+    expect(loadState().settings.vitalsPresentation).toBe('observed');
   });
 
-  it('既定では呼吸数が閾値から離される（実測モードの制約が既定で効く）', () => {
-    expect(rrMarginFor(loadState().settings.rrPresentation)).toBe(OBSERVED_RR_MARGIN);
+  it('既定では呼吸数もCRTも閾値から離される（実測モードの制約が既定で効く）', () => {
+    const presentation = loadState().settings.vitalsPresentation;
+    expect(rrMarginFor(presentation)).toBe(OBSERVED_RR_MARGIN);
+    expect(crtMarginFor(presentation)).toBe(MEASURED_CRT_MARGIN);
+  });
+
+  it('数値モードではどちらのマージンもかからない', () => {
+    expect(rrMarginFor('numeric')).toBe(0);
+    expect(crtMarginFor('numeric')).toBe(0);
+  });
+});
+
+describe('設定の改名 rrPresentation → vitalsPresentation', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('旧フィールドの値を引き継ぐ（記録も設定も失わない）', () => {
+    writeRaw({ schemaVersion: 2, settings: { rrPresentation: 'numeric' }, bestTimeMs: { numeric: 70_000 } });
+
+    const state = loadState();
+    expect(state.settings.vitalsPresentation).toBe('numeric');
+    // 値を変えていないので自己ベストのキーもそのまま使える
+    expect(state.bestTimeMs.numeric).toBe(70_000);
+  });
+
+  it('新フィールドがあれば旧フィールドより優先する', () => {
+    writeRaw({
+      schemaVersion: 2,
+      settings: { rrPresentation: 'numeric', vitalsPresentation: 'observed' },
+      bestTimeMs: {},
+    });
+    expect(loadState().settings.vitalsPresentation).toBe('observed');
+  });
+
+  it('旧フィールドが不正なら既定値に落ちる', () => {
+    writeRaw({ schemaVersion: 2, settings: { rrPresentation: 'telepathy' }, bestTimeMs: {} });
+    expect(loadState().settings.vitalsPresentation).toBe(DEFAULT_SETTINGS.vitalsPresentation);
   });
 });
 
@@ -236,16 +272,16 @@ describe('patchSettings', () => {
   beforeEach(() => localStorage.clear());
 
   it('指定した設定だけを変更する', () => {
-    patchSettings({ rrPresentation: 'observed' });
+    patchSettings({ vitalsPresentation: 'observed' });
     const { settings } = loadState();
-    expect(settings.rrPresentation).toBe('observed');
+    expect(settings.vitalsPresentation).toBe('observed');
     expect(settings.locale).toBe(DEFAULT_SETTINGS.locale);
     expect(settings.boundaryRate).toBe(DEFAULT_SETTINGS.boundaryRate);
   });
 
   it('提示方式を切り替えてもベストタイムは保持される', () => {
     recordBestTime('numeric', 70000);
-    patchSettings({ rrPresentation: 'observed' });
+    patchSettings({ vitalsPresentation: 'observed' });
     expect(loadState().bestTimeMs.numeric).toBe(70000);
   });
 
@@ -264,7 +300,7 @@ describe('localStorage が使えない環境', () => {
     });
 
     expect(() => saveState({ schemaVersion: 2, settings: DEFAULT_SETTINGS, bestTimeMs: DEFAULT_BEST_TIMES, learnStats: emptyLearnStats(), disclaimerAckVersion: null })).not.toThrow();
-    expect(() => patchSettings({ rrPresentation: 'observed' })).not.toThrow();
+    expect(() => patchSettings({ vitalsPresentation: 'observed' })).not.toThrow();
     expect(() => recordBestTime('numeric', 1000)).not.toThrow();
 
     spy.mockRestore();
@@ -309,12 +345,12 @@ describe('免責文の確認状態（SPEC §1.7）', () => {
   });
 
   it('確認しても他の設定や統計を壊さない', () => {
-    patchSettings({ rrPresentation: 'observed' });
+    patchSettings({ vitalsPresentation: 'observed' });
     recordLearnAnswer('I', 'I');
     acknowledgeDisclaimer();
 
     const state = loadState();
-    expect(state.settings.rrPresentation).toBe('observed');
+    expect(state.settings.vitalsPresentation).toBe('observed');
     expect(state.learnStats.answered).toBe(1);
     expect(state.disclaimerAckVersion).toBe(DISCLAIMER_VERSION);
   });

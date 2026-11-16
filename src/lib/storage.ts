@@ -2,6 +2,7 @@
  * localStorage ラッパ（SPEC §4.4）。
  * スキーマ不一致・JSON破損・localStorage 無効（Safariプライベート等）でも例外を投げず既定値へ落ちる。
  */
+import { MEASURED_CRT_MARGIN } from '@/domain/circulation';
 import { DEFAULT_LOCALE } from '@/i18n/detect';
 import { isLocale, type Locale } from '@/i18n/types';
 import { CATEGORIES, type Category } from '@/domain/types';
@@ -10,9 +11,14 @@ const STORAGE_KEY = 'triage-start:v1';
 const SCHEMA_VERSION = 2;
 
 /**
- * 呼吸数の提示方式（docs/OBSERVATION.md）。
- * - `numeric`  数値で提示する。閾値（9/10・29/30）の記憶を訓練する
- * - `observed` 胸郭アニメーションを観察してタップで数える。現場の実務を訓練する
+ * バイタルの提示方式（docs/OBSERVATION.md）。
+ *
+ * - `numeric`  すべて数値で提示する。閾値（呼吸数 9/10・29/30、CRT 2.0秒）の記憶を訓練する
+ * - `observed` 自分で計測する。胸郭の動きを数え、爪床を圧迫して CRT を測り、
+ *   橈骨動脈の拍動を数える。現場の実務を訓練する
+ *
+ * **値は変えてはならない。** `bestTimeMs` のキーに使っており、
+ * 変更すると既存の記録を失う。
  */
 export const RR_PRESENTATIONS = ['numeric', 'observed'] as const;
 export type RrPresentation = (typeof RR_PRESENTATIONS)[number];
@@ -29,6 +35,11 @@ export function rrMarginFor(presentation: RrPresentation): number {
   return presentation === 'observed' ? OBSERVED_RR_MARGIN : 0;
 }
 
+/** 提示方式に対応する CRT マージン（秒）。ジェネレータへそのまま渡す */
+export function crtMarginFor(presentation: RrPresentation): number {
+  return presentation === 'observed' ? MEASURED_CRT_MARGIN : 0;
+}
+
 export interface Settings {
   /** 表示言語。**profile とは独立**（docs/I18N.md §2） */
   locale: Locale;
@@ -38,8 +49,8 @@ export interface Settings {
   boundaryRate: number;
   suddenDeath: boolean;
   showTimer: boolean;
-  /** 呼吸数の提示方式 */
-  rrPresentation: RrPresentation;
+  /** バイタルの提示方式。呼吸数・CRT・脈拍のすべてに効く */
+  vitalsPresentation: RrPresentation;
 }
 
 /**
@@ -87,7 +98,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showTimer: true,
   // 既定は実測。現場で必要なのは「見て判断する」技能であり、
   // 数値を読む練習は設定で明示的に選ぶものとする（docs/OBSERVATION.md §2）
-  rrPresentation: 'observed',
+  vitalsPresentation: 'observed',
 };
 
 export const DEFAULT_BEST_TIMES: BestTimes = { numeric: null, observed: null };
@@ -175,9 +186,13 @@ function sanitizeSettings(value: unknown): Settings {
     // 外部から来た値は必ず検証する
     locale: isLocale(s.locale) ? s.locale : DEFAULT_SETTINGS.locale,
     profile: 'JP-FDMA',
-    rrPresentation: isRrPresentation(s.rrPresentation)
-      ? s.rrPresentation
-      : DEFAULT_SETTINGS.rrPresentation,
+    // 旧 `rrPresentation` からの移行。呼吸だけの設定ではなくなったため改名した。
+    // 値は変えていないので、そのまま読み替えれば記録も設定も失われない
+    vitalsPresentation: isRrPresentation(s.vitalsPresentation)
+      ? s.vitalsPresentation
+      : isRrPresentation((value as Record<string, unknown>).rrPresentation)
+        ? ((value as Record<string, unknown>).rrPresentation as RrPresentation)
+        : DEFAULT_SETTINGS.vitalsPresentation,
     boundaryRate:
       typeof s.boundaryRate === 'number' && s.boundaryRate >= 0 && s.boundaryRate <= 1
         ? s.boundaryRate

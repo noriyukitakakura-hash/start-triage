@@ -69,11 +69,11 @@ export function ChallengeMode({ onHome }: { onHome: () => void }) {
         <span className="font-mono tabular-nums">
           {t('challenge.progress', { current: challenge.index + 1, total: challenge.total })}
         </span>
-        {settings.showTimer && <Timer startedAt={challenge.startedAt} />}
+        {settings.showTimer && <Timer startedAt={challenge.startedAt} analog />}
       </div>
 
       {/* 症例の key で計数UIと気道確保の状態を確実にリセットする */}
-      <CaseCard key={current.case.id} case={current.case} presentation={settings.rrPresentation} />
+      <CaseCard key={current.case.id} case={current.case} presentation={settings.vitalsPresentation} />
 
       <div className="shrink-0">
         <CategoryButtons onAnswer={answer} />

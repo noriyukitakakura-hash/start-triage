@@ -51,7 +51,7 @@ function createSet(settings: Settings): GeneratedCase[] {
   const rng = createRng(`challenge-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
   return generateQuizSet(rng, {
     boundaryRate: settings.boundaryRate,
-    rrMargin: rrMarginFor(settings.rrPresentation),
+    rrMargin: rrMarginFor(settings.vitalsPresentation),
     profile: JP_FDMA,
   });
 }
@@ -101,7 +101,7 @@ export function useChallenge(settings: Settings): Challenge {
         const timeMs = s.startedAt === null ? 0 : performance.now() - s.startedAt;
         // **全問正解のときだけ記録する。** 誤答を含む速い回が完答より上に来ないようにするため
         const perfect = correctCount === cases.length;
-        const newBest = perfect && recordBestTime(settings.rrPresentation, timeMs);
+        const newBest = perfect && recordBestTime(settings.vitalsPresentation, timeMs);
 
         return {
           ...s,
@@ -114,7 +114,7 @@ export function useChallenge(settings: Settings): Challenge {
         };
       });
     },
-    [cases, settings.suddenDeath, settings.rrPresentation],
+    [cases, settings.suddenDeath, settings.vitalsPresentation],
   );
 
   const restart = useCallback(() => {
@@ -127,11 +127,11 @@ export function useChallenge(settings: Settings): Challenge {
       ...state,
       current,
       total: cases.length || QUIZ_LENGTH,
-      presentation: settings.rrPresentation,
+      presentation: settings.vitalsPresentation,
       begin,
       answer,
       restart,
     }),
-    [state, current, cases.length, settings.rrPresentation, begin, answer, restart],
+    [state, current, cases.length, settings.vitalsPresentation, begin, answer, restart],
   );
 }

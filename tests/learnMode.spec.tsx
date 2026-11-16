@@ -5,7 +5,7 @@ import { CaseCard } from '@/components/CaseCard';
 import { VitalsPanel } from '@/components/VitalsPanel';
 import { LearnMode } from '@/features/learn/LearnMode';
 import { CountFeedback } from '@/features/learn/CountFeedback';
-import { EMPTY_COUNT } from '@/components/BreathCounter';
+import { EMPTY_COUNT } from '@/domain/tapCounting';
 import { JP_FDMA } from '@/domain/profiles';
 import { SettingsProvider } from '@/app/SettingsProvider';
 import { I18nProvider } from '@/i18n';
@@ -124,13 +124,18 @@ describe('気道確保ボタンが答えを漏らさない（docs/OBSERVATION.md
 });
 
 describe('実測モードは呼吸数の数値を画面に出さない', () => {
-  it('呼吸数の行が視覚的に表示されない', () => {
+  it('呼吸数・CRT・脈拍の真の値が画面に出ない', () => {
     const { container } = renderCard(BREATHING, 'observed');
-    // 36 という数値が画面上のどこにも見えない（脈拍110・CRT1.4は見える）
-    const visible = container.querySelectorAll('dd:not(.sr-only dd)');
-    const texts = [...visible].map((n) => n.textContent);
-    expect(texts.some((x) => x.includes('36'))).toBe(false);
-    expect(texts.some((x) => x.includes('110'))).toBe(true);
+    // 自分で測る項目の真の値は、sr-only を除いて画面に出ない
+    const visible = [...container.querySelectorAll('*')]
+      .filter((el) => el.closest('.sr-only') === null && el.children.length === 0)
+      .map((el) => el.textContent);
+
+    expect(visible.some((x) => x.includes('36')), '呼吸数が漏れている').toBe(false);
+    expect(visible.some((x) => x.includes('110')), '脈拍が漏れている').toBe(false);
+    expect(visible.some((x) => x.includes('1.4')), 'CRTが漏れている').toBe(false);
+    // 判定に必要だが自分では測らない項目は従来どおり表示する
+    expect(visible.some((x) => x.includes('従える'))).toBe(true);
   });
 
   it('数値モードでは呼吸数を表示する', () => {
@@ -172,7 +177,7 @@ describe('prefers-reduced-motion のフォールバック（docs/OBSERVATION.md 
 describe('タップ計数は回答の前提条件ではない', () => {
   it('一度も数えずに区分を回答できる', async () => {
     const user = userEvent.setup();
-    patchSettings({ rrPresentation: 'observed' });
+    patchSettings({ vitalsPresentation: 'observed' });
     wrap(<LearnMode />);
 
     const button = screen.getByRole('button', { name: 'I類・緊急治療群' });
@@ -191,8 +196,20 @@ describe('タップ計数は回答の前提条件ではない', () => {
     expect(screen.getByText(/36/)).toBeInTheDocument();
   });
 
-  it('無呼吸の症例では計数フィードバックを出さない', () => {
+  it('評価されなかった項目のフィードバックは出さない', () => {
+    // 無呼吸の症例は気道確保で確定する。呼吸数もCRTも評価されていない
     const { container } = wrap(<CountFeedback case={APNEIC} count={EMPTY_COUNT} profile={JP_FDMA} />);
+    expect(container.textContent).toBe('');
+  });
+
+  it('測った項目は評価外でも結果を返す', () => {
+    wrap(<CountFeedback case={APNEIC} count={EMPTY_COUNT} profile={JP_FDMA} measuredCrt={2.4} />);
+    expect(screen.getByText(/CRT/)).toBeInTheDocument();
+  });
+
+  it('歩行可能な症例では呼吸数のフィードバックを出さない', () => {
+    const walkable = { ...BREATHING, canWalk: true, respiratoryRate: 18 };
+    const { container } = wrap(<CountFeedback case={walkable} count={EMPTY_COUNT} profile={JP_FDMA} />);
     expect(container.textContent).toBe('');
   });
 });

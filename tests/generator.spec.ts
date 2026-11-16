@@ -476,3 +476,163 @@ describe('generator: 実測モードの呼吸数マージン', () => {
     expect(() => generateCase({ target: 'II', rrMargin: 10 }, rng)).toThrow(RangeError);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 実測モード: CRT の判別マージン（docs/OBSERVATION.md）
+// ---------------------------------------------------------------------------
+
+const OBSERVED_CRT_MARGIN = 0.5;
+
+/** 閾値からの距離。実測モードではこれが margin 以上でなければならない */
+function crtDistance(crt: number): number {
+  return Math.abs(crt - JP_FDMA.crtThresholdSeconds);
+}
+
+describe('generator: 実測モードのCRTマージン', () => {
+  it(`${ITERATIONS.toLocaleString()}回: 全症例のCRTが閾値から ${OBSERVED_CRT_MARGIN} 以上離れている`, () => {
+    const rng = createRng('crt-margin-invariant');
+    const failures: string[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const g = generateCase(
+        { target: combo.target, decidingStep: combo.decidingStep, crtMargin: OBSERVED_CRT_MARGIN },
+        rng,
+      );
+      const distance = crtDistance(g.case.crtSeconds);
+      if (distance < OBSERVED_CRT_MARGIN) {
+        failures.push(`#${i} crt=${g.case.crtSeconds} (${g.target}/${g.decidingStep}) 距離${distance.toFixed(1)}`);
+      }
+    }
+
+    expect(failures.slice(0, 5)).toEqual([]);
+    expect(failures).toHaveLength(0);
+  });
+
+  it('循環を評価しない症例（歩行可・気道確保）のCRTも離れている', () => {
+    const rng = createRng('crt-margin-free');
+    for (let i = 0; i < 3000; i++) {
+      for (const combo of [
+        { target: 'III', decidingStep: 'walk' },
+        { target: '0', decidingStep: 'airway' },
+        { target: 'I', decidingStep: 'respiratoryRate' },
+      ] as const) {
+        const g = generateCase(
+          { target: combo.target, decidingStep: combo.decidingStep, crtMargin: OBSERVED_CRT_MARGIN },
+          rng,
+        );
+        expect(
+          crtDistance(g.case.crtSeconds),
+          `${combo.target}/${combo.decidingStep} crt=${g.case.crtSeconds}`,
+        ).toBeGreaterThanOrEqual(OBSERVED_CRT_MARGIN);
+      }
+    }
+  });
+
+  it(`${ITERATIONS.toLocaleString()}回: CRTマージンを入れても judge の結果が target と一致する`, () => {
+    const rng = createRng('crt-margin-judge');
+    const failures: string[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const g = generateCase(
+        {
+          target: combo.target,
+          decidingStep: combo.decidingStep,
+          rrMargin: OBSERVED_MARGIN,
+          crtMargin: OBSERVED_CRT_MARGIN,
+        },
+        rng,
+      );
+      const j = judge(g.case, JP_FDMA);
+      if (j.category !== combo.target || j.decidingStep !== combo.decidingStep) {
+        failures.push(`#${i} 意図=${combo.target}/${combo.decidingStep} 実際=${j.category}/${j.decidingStep}`);
+      }
+    }
+
+    expect(failures.slice(0, 5)).toEqual([]);
+    expect(failures).toHaveLength(0);
+  });
+
+  it('両マージンを入れても症例データ自体に矛盾がない', () => {
+    const rng = createRng('crt-margin-consistency');
+    for (let i = 0; i < 3000; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      assertInternallyConsistent(
+        generateCase(
+          {
+            target: combo.target,
+            decidingStep: combo.decidingStep,
+            rrMargin: OBSERVED_MARGIN,
+            crtMargin: OBSERVED_CRT_MARGIN,
+          },
+          rng,
+        ),
+      );
+    }
+  });
+
+  it('値域が設計どおり（通過 1.0〜1.5 / 該当 2.5〜4.0）', () => {
+    const rng = createRng('crt-margin-bands');
+    const pass = new Set<number>();
+    const fail = new Set<number>();
+
+    for (let i = 0; i < 8000; i++) {
+      // 意識で確定する症例は循環を通過している
+      pass.add(generateCase({ target: 'II', crtMargin: OBSERVED_CRT_MARGIN }, rng).case.crtSeconds);
+
+      const f = generateCase(
+        { target: 'I', decidingStep: 'circulation', crtMargin: OBSERVED_CRT_MARGIN },
+        rng,
+      ).case;
+      // 橈骨動脈触知不能で確定した症例は CRT が正常域のこともある
+      if (f.radialPulsePalpable) fail.add(f.crtSeconds);
+    }
+
+    expect(Math.min(...pass)).toBe(1.0);
+    expect(Math.max(...pass)).toBe(1.5);
+    expect(Math.min(...fail)).toBe(2.5);
+    expect(Math.max(...fail)).toBe(4.0);
+  });
+
+  it('脈拍120以上の症例はCRTが1.5秒以上（生理学的整合を保つ）', () => {
+    const rng = createRng('crt-margin-pulse');
+    for (let i = 0; i < 5000; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const c = generateCase(
+        { target: combo.target, decidingStep: combo.decidingStep, crtMargin: OBSERVED_CRT_MARGIN },
+        rng,
+      ).case;
+      if (c.pulseRate !== null && c.pulseRate >= 120) {
+        expect(c.crtSeconds, `pulse=${c.pulseRate} crt=${c.crtSeconds}`).toBeGreaterThanOrEqual(1.5);
+      }
+    }
+  });
+
+  it('循環ステップの usedBoundary は実測モードでは常に false', () => {
+    const rng = createRng('crt-margin-no-boundary');
+    for (let i = 0; i < 2000; i++) {
+      const g = generateCase(
+        {
+          target: 'I',
+          decidingStep: 'circulation',
+          rrMargin: OBSERVED_MARGIN,
+          crtMargin: OBSERVED_CRT_MARGIN,
+          boundaryRate: 1,
+        },
+        rng,
+      );
+      expect(g.usedBoundary).toBe(false);
+      expect(g.case.crtSeconds).not.toBe(JP_FDMA.crtThresholdSeconds);
+    }
+  });
+
+  it('マージンが大きすぎて通過域が空になる場合はエラー', () => {
+    const rng = createRng('crt-margin-too-large');
+    expect(() => generateCase({ target: 'II', crtMargin: 1.5 }, rng)).toThrow(RangeError);
+  });
+});

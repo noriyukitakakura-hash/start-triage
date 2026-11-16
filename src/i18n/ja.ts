@@ -130,11 +130,11 @@ export const ja = {
   'explain.agonalNote': '死戦期呼吸です。胸郭はわずかに動いているため自発呼吸はあり、呼吸数が{threshold}回以下なので I類になります。',
 
   // --- 設定 (S6) ---
-  'settings.rrPresentation': '呼吸数の提示',
-  'settings.rrPresentation.numeric': '数値',
-  'settings.rrPresentation.numeric.description': '呼吸数を数値で表示します。閾値の記憶を訓練します。',
-  'settings.rrPresentation.observed': '実測',
-  'settings.rrPresentation.observed.description': '胸郭の動きを見て数えます。現場の実務を訓練します。',
+  'settings.vitalsPresentation': '呼吸数の提示',
+  'settings.vitalsPresentation.numeric': '数値',
+  'settings.vitalsPresentation.numeric.description': '呼吸数を数値で表示します。閾値の記憶を訓練します。',
+  'settings.vitalsPresentation.observed': '実測',
+  'settings.vitalsPresentation.observed.description': '胸郭の動きを見て数えます。現場の実務を訓練します。',
 
   // --- シェル・設定シート (S6) ---
   'app.titleShort': 'START法トリアージ',
@@ -221,6 +221,40 @@ export const ja = {
   'share.mode.numeric': '数値モード',
   'share.mode.observed': '実測モード',
   'share.hashtags': 'STARTトリアージ,災害医療,トリアージ訓練',
+
+  // --- CRT の実測 (docs/OBSERVATION.md) ---
+  'crt.heading': 'CRT（毛細血管再充満時間）の測定',
+  'crt.instruction': '爪を{seconds}秒間押し続けてから離し、色が戻るまでの時間を測ります。',
+  'crt.press': '爪を押す',
+  'crt.pressing': '押し続けてください 残り {seconds} 秒',
+  'crt.tooShort': '{seconds}秒間押し続けてください。圧迫が足りないと正しく測れません。',
+  'crt.watching': '色が戻ったら押してください',
+  'crt.reportReturned': '色が戻った',
+  'crt.measured': '測定値 {seconds} 秒',
+  'crt.retry': '測り直す',
+  'crt.notMeasured': '未測定',
+
+  // --- 脈拍の実測 ---
+  'pulse.heading': '橈骨動脈の触知',
+  'pulse.instruction': '手首の橈骨動脈に触れ、拍動に合わせてタップしてください。',
+  'pulse.tap': '脈を数える',
+  'pulse.notPalpable': '拍動を触れません',
+  'pulse.palpable': '拍動を触れます',
+  'pulse.measured': '{rate} 回/分',
+  'pulse.notMeasured': '未測定',
+  'pulse.measure': '触知する',
+
+  // --- アナログ時計 ---
+  'clock.elapsed': '経過時間',
+
+  // --- 解説の追加分 ---
+  'explain.crtAccuracy': 'CRT 測定 {measured}秒 ／ 実際 {actual}秒（誤差 {delta}）',
+  'explain.crtExact': 'CRT 測定 {measured}秒。実際の値と一致しています。',
+  'explain.crtNotMeasured': 'CRTは測定しませんでした。実際は {actual}秒です。',
+  'explain.crtBandCorrect': '測定値はずれましたが、「{band}」という判断自体は正しくできています。',
+  'explain.crtBandWrong': '測定値のずれが「{band}」の判断に影響しています。',
+  'explain.crtBandDelayed': '{threshold}秒以上',
+  'explain.crtBandWithinRange': '{threshold}秒未満',
 
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',

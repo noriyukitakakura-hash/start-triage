@@ -7,7 +7,7 @@ import { createRng, type Rng } from '@/domain/rng';
 import type { Category } from '@/domain/types';
 import { CaseCard } from '@/components/CaseCard';
 import { CATEGORY_KEYS, CategoryButtons } from '@/components/CategoryButtons';
-import { EMPTY_COUNT, type CountResult } from '@/components/BreathCounter';
+import { EMPTY_COUNT, type CountResult } from '@/domain/tapCounting';
 import { useI18n } from '@/i18n';
 import { recordLearnAnswer, rrMarginFor } from '@/lib/storage';
 import { useSettings } from '@/app/SettingsProvider';
@@ -36,7 +36,7 @@ export function LearnMode() {
     createRng(`learn-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`),
   );
 
-  const rrMargin = rrMarginFor(settings.rrPresentation);
+  const rrMargin = rrMarginFor(settings.vitalsPresentation);
 
   const nextCase = useCallback(
     (): GeneratedCase => generateCase({ target: rng.pick(LEARN_WEIGHTS), rrMargin, profile }, rng),
@@ -47,6 +47,7 @@ export function LearnMode() {
   const [answer, setAnswer] = useState<Category | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [count, setCount] = useState<CountResult>(EMPTY_COUNT);
+  const [measuredCrt, setMeasuredCrt] = useState<number | null>(null);
 
   const judgement = useMemo(() => judge(item.case, profile), [item, profile]);
   const explanation = useMemo(() => explain(item.case, profile), [item, profile]);
@@ -66,6 +67,7 @@ export function LearnMode() {
     setItem(nextCase());
     setAnswer(null);
     setCount(EMPTY_COUNT);
+    setMeasuredCrt(null);
   }, [nextCase]);
 
   // キーボードショートカット（SPEC §5.2）。回答後はシートが受け持つ
@@ -93,8 +95,9 @@ export function LearnMode() {
       <CaseCard
         key={item.case.id}
         case={item.case}
-        presentation={settings.rrPresentation}
+        presentation={settings.vitalsPresentation}
         onCountChange={setCount}
+        onCrtMeasured={setMeasuredCrt}
       />
 
       <div className="shrink-0">
@@ -130,8 +133,9 @@ export function LearnMode() {
           answer={answer}
           expected={judgement.category}
           count={count}
+          measuredCrt={measuredCrt}
           profile={profile}
-          showCountFeedback={settings.rrPresentation === 'observed'}
+          showCountFeedback={settings.vitalsPresentation === 'observed'}
         />
       )}
     </section>

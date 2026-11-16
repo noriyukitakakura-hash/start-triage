@@ -14,26 +14,26 @@ export function RrPresentationSwitch() {
 
   return (
     <fieldset className="rounded-lg border border-slate-700 p-2">
-      <legend className="px-1 text-xs text-slate-400">{t('settings.rrPresentation')}</legend>
+      <legend className="px-1 text-xs text-slate-400">{t('settings.vitalsPresentation')}</legend>
       <div className="flex gap-2">
         {RR_PRESENTATIONS.map((presentation) => {
-          const active = settings.rrPresentation === presentation;
+          const active = settings.vitalsPresentation === presentation;
           return (
             <button
               key={presentation}
               type="button"
               aria-pressed={active}
-              onClick={() => updateSettings({ rrPresentation: presentation })}
+              onClick={() => updateSettings({ vitalsPresentation: presentation })}
               className={[
                 'flex-1 rounded-md px-3 py-1.5 text-left transition',
                 active ? 'bg-slate-100 text-slate-900' : 'text-slate-300 hover:bg-slate-700',
               ].join(' ')}
             >
               <span className="block text-sm font-semibold">
-                {t(`settings.rrPresentation.${presentation}`)}
+                {t(`settings.vitalsPresentation.${presentation}`)}
               </span>
               <span className={['block text-xs', active ? 'text-slate-600' : 'text-slate-500'].join(' ')}>
-                {t(`settings.rrPresentation.${presentation}.description`)}
+                {t(`settings.vitalsPresentation.${presentation}.description`)}
               </span>
             </button>
           );

@@ -1,7 +1,11 @@
 import { useCallback, useState } from 'react';
 import type { TriageCase } from '@/domain/types';
 import { PatientFigure } from '@/components/patients';
-import { BreathCounter, type CountResult } from '@/components/BreathCounter';
+import { BreathCounter } from '@/components/BreathCounter';
+import { CrtMeasure } from '@/components/CrtMeasure';
+import { PulseMeasure } from '@/components/PulseMeasure';
+import { Sheet } from '@/components/Sheet';
+import { EMPTY_COUNT, type CountResult } from '@/domain/tapCounting';
 import { VitalsPanel, shouldAnimateChest } from '@/components/VitalsPanel';
 import { useI18n } from '@/i18n';
 import type { TranslationKey } from '@/i18n/types';
@@ -28,11 +32,27 @@ export interface CaseCardProps {
   case: TriageCase;
   presentation: RrPresentation;
   onCountChange?: (result: CountResult) => void;
+  /** 利用者が測った CRT を親へ渡す（解説での誤差提示に使う） */
+  onCrtMeasured?: (seconds: number) => void;
 }
 
-export function CaseCard({ case: c, presentation, onCountChange }: CaseCardProps) {
+type MeasureTarget = 'crt' | 'pulse' | null;
+
+export function CaseCard({ case: c, presentation, onCountChange, onCrtMeasured }: CaseCardProps) {
   const { t } = useI18n();
   const [airwayPerformed, setAirwayPerformed] = useState(false);
+  // 計測はシートで行う。症例カードに常時置くとスクロールなしの制約を破る（SPEC §5.1）
+  const [measuring, setMeasuring] = useState<MeasureTarget>(null);
+  const [measuredCrt, setMeasuredCrt] = useState<number | null>(null);
+  const [pulseCount, setPulseCount] = useState<CountResult>(EMPTY_COUNT);
+
+  const handleCrtMeasured = useCallback(
+    (seconds: number) => {
+      setMeasuredCrt(seconds);
+      onCrtMeasured?.(seconds);
+    },
+    [onCrtMeasured],
+  );
 
   const observed = presentation === 'observed';
   const showAirwayButton = observed || !c.hasSpontaneousBreathing;
@@ -87,8 +107,49 @@ export function CaseCard({ case: c, presentation, onCountChange }: CaseCardProps
           </p>
         )}
 
-        <VitalsPanel case={c} presentation={presentation} />
+        <VitalsPanel
+          case={c}
+          presentation={presentation}
+          measuredCrt={measuredCrt}
+          measuredPulse={pulseCount.estimatedRate}
+          onMeasureCrt={() => setMeasuring('crt')}
+          onMeasurePulse={() => setMeasuring('pulse')}
+        />
       </div>
+
+      <Sheet
+        open={measuring === 'crt'}
+        onClose={() => setMeasuring(null)}
+        title={t('crt.heading')}
+        footer={
+          <button
+            type="button"
+            onClick={() => setMeasuring(null)}
+            className="min-h-12 w-full bg-slate-100 text-base font-semibold text-slate-900 transition active:scale-95"
+          >
+            {t('settings.close')}
+          </button>
+        }
+      >
+        <CrtMeasure case={c} onMeasured={handleCrtMeasured} measured={measuredCrt} />
+      </Sheet>
+
+      <Sheet
+        open={measuring === 'pulse'}
+        onClose={() => setMeasuring(null)}
+        title={t('pulse.heading')}
+        footer={
+          <button
+            type="button"
+            onClick={() => setMeasuring(null)}
+            className="min-h-12 w-full bg-slate-100 text-base font-semibold text-slate-900 transition active:scale-95"
+          >
+            {t('settings.close')}
+          </button>
+        }
+      >
+        <PulseMeasure case={c} onCounted={setPulseCount} count={pulseCount} />
+      </Sheet>
     </article>
   );
 }

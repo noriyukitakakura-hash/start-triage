@@ -1,7 +1,7 @@
 import type { Explanation } from '@/domain/explain';
 import type { Category, RuleProfile, TriageCase } from '@/domain/types';
 import { breathingPatternOf } from '@/domain/breathing';
-import type { CountResult } from '@/components/BreathCounter';
+import type { CountResult } from '@/domain/tapCounting';
 import { FlowChartCompact } from '@/components/FlowChart';
 import { Sheet } from '@/components/Sheet';
 import { useI18n } from '@/i18n';
@@ -23,6 +23,8 @@ export interface FeedbackSheetProps {
   answer: Category;
   expected: Category;
   count: CountResult;
+  /** 利用者が測った CRT（秒）。未測定は null */
+  measuredCrt: number | null;
   profile: RuleProfile;
   showCountFeedback: boolean;
 }
@@ -36,6 +38,7 @@ export function FeedbackSheet({
   answer,
   expected,
   count,
+  measuredCrt,
   profile,
   showCountFeedback,
 }: FeedbackSheetProps) {
@@ -94,7 +97,9 @@ export function FeedbackSheet({
           </p>
         )}
 
-        {showCountFeedback && <CountFeedback case={c} count={count} profile={profile} />}
+        {showCountFeedback && (
+          <CountFeedback case={c} count={count} measuredCrt={measuredCrt} profile={profile} />
+        )}
       </div>
     </Sheet>
   );

@@ -1,0 +1,28 @@
+/*
+ * CRT 計測の爪床（components/CrtMeasure.tsx）。
+ *
+ * 色が戻る速さは症例の `crtSeconds` をインラインの transition-duration で渡す。
+ * **提示する速さが真値と一致していなければ誤った数値を教えることになる**ため、
+ * アニメーションではなく単純な遷移にして時間を正確に保つ。
+ */
+.crt-finger {
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  /* 長押し中に選択やコンテキストメニューが出ないようにする */
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.crt-nail {
+  fill: #e8a08a;
+  stroke: #c07a62;
+  stroke-width: 2;
+  transition-property: fill;
+}
+
+.crt-nail--blanched {
+  fill: #fdf6f2;
+}

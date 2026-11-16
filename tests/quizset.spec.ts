@@ -10,7 +10,7 @@ import {
 } from '@/domain/generator';
 import { JP_FDMA } from '@/domain/profiles';
 import { createRng } from '@/domain/rng';
-import type { Category } from '@/domain/types';
+import { DECIDING_STEPS, type Category } from '@/domain/types';
 
 function tally(categories: Category[]): Record<Category, number> {
   const t: Record<Category, number> = { I: 0, II: 0, III: 0, '0': 0 };
@@ -232,6 +232,87 @@ describe('generateQuizSet: 実測モード', () => {
         const j = judge(g.case, JP_FDMA);
         expect(j.category, JSON.stringify(g.case)).toBe(g.target);
         expect(j.decidingStep, JSON.stringify(g.case)).toBe(g.decidingStep);
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 全バイタル実測モード: 境界値の概念が成立しない（docs/OBSERVATION.md）
+// ---------------------------------------------------------------------------
+
+const OBSERVED_CRT_MARGIN = 0.5;
+const MEASURED = { rrMargin: OBSERVED_MARGIN, crtMargin: OBSERVED_CRT_MARGIN } as const;
+
+describe('generateQuizSet: 全バイタル実測モード', () => {
+  it('どのステップも境界値を取れなくなる', () => {
+    for (const step of DECIDING_STEPS) {
+      expect(
+        canUseBoundary(step, MEASURED.rrMargin, MEASURED.crtMargin),
+        `${step} は実測モードで境界値を取れてはならない`,
+      ).toBe(false);
+    }
+    for (const category of ['I', 'II', 'III', '0'] as const) {
+      expect(boundaryCapableStepsFor(category, MEASURED.rrMargin, MEASURED.crtMargin)).toEqual([]);
+    }
+  });
+
+  it('片方だけのマージンなら境界値は成立する（通過側の値が境界値になり得る）', () => {
+    // 呼吸数だけ実測: CRT と、通過した CRT の境界値が使える
+    expect(canUseBoundary('circulation', OBSERVED_MARGIN, 0)).toBe(true);
+    expect(canUseBoundary('consciousness', OBSERVED_MARGIN, 0)).toBe(true);
+    // CRT だけ実測: 通過した呼吸数の境界値が使える
+    expect(canUseBoundary('circulation', 0, OBSERVED_CRT_MARGIN)).toBe(true);
+    expect(canUseBoundary('respiratoryRate', 0, OBSERVED_CRT_MARGIN)).toBe(true);
+  });
+
+  it('境界値0問でも停止し、異常にしない', () => {
+    const rng = createRng('measured-quiz-terminates');
+    for (let i = 0; i < SETS; i++) {
+      const set = generateQuizSet(rng, { ...MEASURED, boundaryRate: 1 });
+      expect(set).toHaveLength(QUIZ_LENGTH);
+      // 1問も境界値にならない。閾値訓練は数値モードが担う
+      expect(set.filter((g) => g.usedBoundary)).toEqual([]);
+    }
+  });
+
+  it('境界値が作れなくても区分の構成比は維持される', () => {
+    const rng = createRng('measured-quiz-composition');
+    const fixed = tally([...QUIZ_COMPOSITION]);
+    for (let i = 0; i < SETS; i++) {
+      const actual = tally(generateQuizSet(rng, MEASURED).map((g) => judge(g.case, JP_FDMA).category));
+      for (const c of ['I', 'II', 'III', '0'] as const) {
+        expect(actual[c]).toBeGreaterThanOrEqual(fixed[c]);
+        expect(actual[c]).toBeLessThanOrEqual(fixed[c] + 1);
+      }
+    }
+  });
+
+  it('全症例が judge で target どおりに判定される', () => {
+    const rng = createRng('measured-quiz-invariant');
+    for (let i = 0; i < SETS; i++) {
+      for (const g of generateQuizSet(rng, MEASURED)) {
+        const j = judge(g.case, JP_FDMA);
+        expect(j.category, JSON.stringify(g.case)).toBe(g.target);
+        expect(j.decidingStep, JSON.stringify(g.case)).toBe(g.decidingStep);
+      }
+    }
+  });
+
+  it('全症例で呼吸数もCRTも閾値から離れている', () => {
+    const rng = createRng('measured-quiz-margins');
+    for (let i = 0; i < SETS; i++) {
+      for (const g of generateQuizSet(rng, MEASURED)) {
+        const c = g.case;
+        expect(Math.abs(c.crtSeconds - JP_FDMA.crtThresholdSeconds)).toBeGreaterThanOrEqual(
+          OBSERVED_CRT_MARGIN,
+        );
+        if (!c.hasSpontaneousBreathing) continue;
+        const rr = c.respiratoryRate as number;
+        const near =
+          Math.abs(rr - JP_FDMA.respiratoryRateLowMax) < OBSERVED_MARGIN ||
+          Math.abs(rr - JP_FDMA.respiratoryRateHighMin) < OBSERVED_MARGIN;
+        expect(near, `rr=${rr}`).toBe(false);
       }
     }
   });

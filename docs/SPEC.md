@@ -87,8 +87,17 @@
 
 | 方式 | 呼吸数の提示 | 訓練する技能 |
 |---|---|---|
-| `observed`（実測・**既定**） | 胸郭アニメーション + タップ計数 | 現場の実務（見て「明らかに速い」と判断する） |
-| `numeric` | 数値（`呼吸 32 回/分`） | 閾値の正確な記憶（9/10・29/30 の線引き） |
+| `observed`（実測・**既定**） | 胸郭を数え、爪床を圧迫し、脈に触れて自分で測る | 現場の実務 |
+| `numeric` | すべて数値で提示する | 閾値の正確な記憶（呼吸数 9/10・29/30、CRT 2.0秒） |
+
+> 設定は `vitalsPresentation` 一つで呼吸数・CRT・脈拍のすべてに効く。
+> 「現場を再現するか否か」という一つの軸であり、項目ごとに切り替えない。
+>
+> 計測は**シートで行う**。指のモデルと脈の表示を症例カードに常時置くと
+> スクロールなしの制約（§5.1）を破るため、バイタルのセル自体を計測ボタンにしている。
+>
+> **実測モードでは境界値症例が出題されない**（`docs/OBSERVATION.md`）。
+> 呼吸数と CRT の双方にマージンが入り、どのステップも閾値ちょうどの値を取れなくなるため。
 
 > **既定を実測にする理由。** 現場で必要なのは「見て判断する」技能であり、
 > 数値を読む練習は目的を絞った補助である。既定で実測にすることで、
@@ -121,7 +130,10 @@
 
 ### 2.4 10問連続モード (S3/S4)
 - 開始トリガー: ホームの「10問チャレンジ」→ カウントダウン3秒 → 1問目表示と同時にタイマー開始。
-- 計測: `performance.now()` 差分。1問目描画完了から10問目回答確定まで。ミリ秒精度、表示は `M分SS.SS秒`。
+- 計測: `performance.now()` 差分。1問目描画完了から10問目回答確定まで。ミリ秒精度。
+- **出題中の表示はアナログ時計。** 経過時間なので針は回り続ける。
+  数字を読まなくても経過の見当がつく。結果画面は数値表示のまま（記録とXポストに正確な値が要る）。
+  `prefers-reduced-motion` では数値へフォールバックし、`sr-only` で数値を常に併記する。
 - 出題中はフィードバックを一切出さない（正誤を伏せる）。
 - 出題構成（固定比率＋シャッフル）:
 
@@ -403,8 +415,10 @@ export class InconsistentCaseError extends Error {}
   learnStats: { answered: number; correct: number; confusion: Record<Category, Record<Category, number>> },
   // 確認済みの免責文の版（§1.7）。未確認は null
   disclaimerAckVersion: number | null,
+  // 旧 `rrPresentation` から改名。呼吸だけの設定ではなくなったため。
+  // 値は変えていないので bestTimeMs のキーも記録も引き継がれる
   settings: { locale: 'ja' | 'en'; profile: 'JP-FDMA'; boundaryRate: number; suddenDeath: boolean;
-             showTimer: boolean; rrPresentation: 'numeric' | 'observed' }
+             showTimer: boolean; vitalsPresentation: 'numeric' | 'observed' }
   // locale と profile は独立。言語切替で判定基準を変えてはならない（I18N.md §2）
 }
 ```
