@@ -91,7 +91,13 @@ function Nail({
   onPressEnd: () => void;
 }) {
   const { t } = useI18n();
-  const blanched = phase === 'pressing' || phase === 'refilling';
+  /*
+   * **白くするのは圧迫中だけ。** 離した時点でこの指定を外すことで、
+   * fill が元の色へ向かって遷移し始める。遷移にかかる時間は下の
+   * transitionDuration（症例の crtSeconds）が決める。
+   * refilling でも白のままにすると行き先が変わらず、色が永久に戻らない。
+   */
+  const blanched = phase === 'pressing';
 
   return (
     <button

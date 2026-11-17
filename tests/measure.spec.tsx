@@ -130,6 +130,62 @@ describe('CRT: 圧迫時間が手技として要求される（docs/OBSERVATION.
     expect(nail.getAttribute('style')).toContain('2.8s');
   });
 
+  it('離すと白が解除され、色が元へ戻り始める', async () => {
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const nail = container.querySelector('.crt-nail') as SVGElement;
+
+    await pressNail(CRT_PRESS_SECONDS * 1000 + 100);
+
+    // 白の指定が外れていなければ fill の行き先が変わらず、色は永久に戻らない
+    expect(nail.getAttribute('class')).not.toContain('blanched');
+    // 戻る速さは症例の値
+    expect(nail.getAttribute('style')).toContain('2.8s');
+  });
+
+  it('圧迫不足でやり直しになったときも白は残らない', async () => {
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const nail = container.querySelector('.crt-nail') as SVGElement;
+
+    await pressNail(2000);
+
+    expect(nail.getAttribute('class')).not.toContain('blanched');
+  });
+
+  it('申告後も白は残らない', async () => {
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const nail = container.querySelector('.crt-nail') as SVGElement;
+
+    await pressNail(CRT_PRESS_SECONDS * 1000 + 100);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2800);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '色が戻った' }));
+
+    expect(nail.getAttribute('class')).not.toContain('blanched');
+  });
+
+  it('白くなるのは圧迫中の一局面だけである', async () => {
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const nail = container.querySelector('.crt-nail') as SVGElement;
+    const isBlanched = () => (nail.getAttribute('class') ?? '').includes('blanched');
+
+    expect(isBlanched(), '押す前').toBe(false);
+
+    const target = screen.getByRole('button', { name: '爪を押す' });
+    act(() => {
+      fireEvent.pointerDown(target);
+    });
+    expect(isBlanched(), '圧迫中').toBe(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(CRT_PRESS_SECONDS * 1000 + 100);
+    });
+    act(() => {
+      fireEvent.pointerUp(target);
+    });
+    expect(isBlanched(), '離した直後').toBe(false);
+  });
+
   it('押している間は爪床が白くなる', () => {
     const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
 
