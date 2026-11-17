@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { App } from '@/app/App';
 import { SettingsProvider } from '@/app/SettingsProvider';
 import { I18nProvider } from '@/i18n';
-import { acknowledgeDisclaimer } from '@/lib/storage';
+import { acknowledgeDisclaimer, patchSettings } from '@/lib/storage';
 
 /**
  * レイアウトの不変条件（SPEC §5.1）。
@@ -102,6 +102,39 @@ describe('ページ本体をスクロールさせない', () => {
 
     const pane = screen.getByRole('region', { name: '学習モード' });
     expect(pane.className).toContain('min-h-0');
+  });
+});
+
+describe('計測器の常時表示（SPEC §5.1）', () => {
+  it.each(['observed', 'numeric'] as const)(
+    '%s モードでも /learn にスクロール領域が生まれない',
+    async (presentation) => {
+      patchSettings({ vitalsPresentation: presentation });
+      const user = userEvent.setup();
+      const { container } = renderApp('/learn');
+      await dismissDisclaimer(user);
+
+      const scrollable = [...container.querySelectorAll('*')].filter(
+        (el) => el.className.toString().includes('overflow-y-auto') && el.closest('dialog') === null,
+      );
+      expect(scrollable).toEqual([]);
+    },
+  );
+
+  it('計測器が症例ペイン内にあり、イラストが余剰高を吸収する構造を保つ', async () => {
+    patchSettings({ vitalsPresentation: 'observed' });
+    const user = userEvent.setup();
+    const { container } = renderApp('/learn');
+    await dismissDisclaimer(user);
+
+    const figure = container.querySelector('svg.patient-figure') as HTMLElement;
+    expect(figure.getAttribute('class')).toContain('flex-1');
+
+    // 計測器はダイアログではなく症例カードの中にある
+    const nail = container.querySelector('.crt-nail');
+    expect(nail).not.toBeNull();
+    expect(nail?.closest('dialog')).toBeNull();
+    expect(nail?.closest('article')).not.toBeNull();
   });
 });
 

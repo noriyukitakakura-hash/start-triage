@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CaseCard } from '@/components/CaseCard';
-import { VitalsPanel } from '@/components/VitalsPanel';
+import { VitalsBar } from '@/components/vitals/VitalsBar';
 import { LearnMode } from '@/features/learn/LearnMode';
 import { CountFeedback } from '@/features/learn/CountFeedback';
 import { EMPTY_COUNT } from '@/domain/tapCounting';
@@ -154,6 +154,7 @@ describe('実測モードは呼吸数の数値を画面に出さない', () => {
     expect(screen.getByRole('button', { name: '呼吸を数える' })).toBeInTheDocument();
 
     renderCard(BREATHING, 'numeric');
+    // 数値モードのカードを足しても計数ボタンは増えない
     expect(screen.getAllByRole('button', { name: '呼吸を数える' })).toHaveLength(1);
   });
 });
@@ -161,7 +162,7 @@ describe('実測モードは呼吸数の数値を画面に出さない', () => {
 describe('prefers-reduced-motion のフォールバック（docs/OBSERVATION.md §3.5）', () => {
   it('実測モードでも数値を表示し、その旨を画面に出す', () => {
     stubMatchMedia(true);
-    wrap(<VitalsPanel case={BREATHING} presentation="observed" />);
+    wrap(<VitalsBar case={BREATHING} presentation="observed" measuredCrt={null} onCrtMeasured={() => undefined} onBreathCounted={() => undefined} onPulseCounted={() => undefined} />);
 
     expect(screen.getByText('36 回/分')).toBeInTheDocument();
     expect(screen.getByText(/動きを減らす設定が有効なため/)).toBeInTheDocument();
@@ -169,7 +170,7 @@ describe('prefers-reduced-motion のフォールバック（docs/OBSERVATION.md 
 
   it('数値モードではフォールバックの通知を出さない', () => {
     stubMatchMedia(true);
-    wrap(<VitalsPanel case={BREATHING} presentation="numeric" />);
+    wrap(<VitalsBar case={BREATHING} presentation="numeric" measuredCrt={null} onCrtMeasured={() => undefined} onBreathCounted={() => undefined} onPulseCounted={() => undefined} />);
     expect(screen.queryByText(/動きを減らす設定が有効なため/)).not.toBeInTheDocument();
   });
 });
@@ -342,10 +343,20 @@ describe('アクセシビリティ', () => {
     expect(button.textContent).toContain('緊急');
   });
 
-  it('バイタルが定義リストとして読み上げ可能', () => {
+  it('数値モードのバイタルが定義リストとして読み上げ可能', () => {
     const { container } = renderCard(BREATHING, 'numeric');
     expect(container.querySelector('dl')).toBeTruthy();
-    expect(container.querySelectorAll('dt').length).toBeGreaterThanOrEqual(5);
+    // 呼吸数・CRT・橈骨動脈の3項目
+    expect(container.querySelectorAll('dt')).toHaveLength(3);
+    expect(container.querySelectorAll('dd')).toHaveLength(3);
+  });
+
+  it('実測モードでも真の値が定義リストで支援技術に渡る', () => {
+    const { container } = renderCard(BREATHING, 'observed');
+    const srOnly = container.querySelector('dl.sr-only');
+    expect(srOnly).toBeTruthy();
+    expect(srOnly?.querySelectorAll('dt')).toHaveLength(3);
+    expect(srOnly?.textContent).toContain('36');
   });
 
   it('確定したステップが aria-current で示される', async () => {

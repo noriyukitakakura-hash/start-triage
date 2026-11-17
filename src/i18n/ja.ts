@@ -256,6 +256,17 @@ export const ja = {
   'explain.crtBandDelayed': '{threshold}秒以上',
   'explain.crtBandWithinRange': '{threshold}秒未満',
 
+  // --- 狭い計測器セル用の短い文言（SPEC §5.1） ---
+  'observation.instructionShort': '胸郭を見て\nタップ',
+  'crt.remaining': '残り {seconds} 秒',
+  'crt.tooShortShort': '{seconds}秒押す',
+  'crt.watchingShort': '戻ったら押す',
+  'pulse.tapShort': '脈を数える',
+  'pulse.absentShort': '触れない',
+  'vital.commandsShort': '指示応答',
+
+  'crt.pressHint': '爪を長押し',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',
 

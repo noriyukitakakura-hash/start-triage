@@ -1,0 +1,96 @@
+/*
+ * 計測器の見た目（components/vitals/）。
+ *
+ * 速さ・周期はいずれも症例の値をインラインで渡す。
+ * **提示する速さが真値と一致していなければ誤った数値を教えることになる**ため、
+ * ここでは見た目だけを定義し、時間は JS から渡す。
+ */
+
+/* --- CRT: 爪床 --- */
+
+/* 図の領域全体を押下対象にする。爪だけでは 28px 程度でタッチ目標に足りない */
+.crt-target {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  /* 長押し中に選択やコンテキストメニューが出ないようにする */
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.crt-nail {
+  fill: #e8a08a;
+  stroke: #c07a62;
+  stroke-width: 1.5;
+  transition-property: fill;
+}
+
+.crt-nail--blanched {
+  fill: #fdf6f2;
+}
+
+/* --- 脈拍: 触知点 --- */
+
+.pulse-point {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: pulse-beat;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.pulse-point__ring {
+  fill: none;
+  stroke: var(--color-rose-400);
+  stroke-width: 1.5;
+}
+
+.pulse-point__core {
+  fill: var(--color-rose-400);
+}
+
+/*
+ * 触知不能のときは拍動を示す色を使わない。
+ * 静止した赤い点は「脈がある」と誤読されかねないため、位置を示すだけの印にする。
+ */
+.pulse-point--absent .pulse-point__ring {
+  stroke: var(--color-slate-500);
+}
+
+.pulse-point--absent .pulse-point__core {
+  fill: var(--color-slate-500);
+}
+
+/*
+ * 収縮期の立ち上がりは鋭く、拡張期はゆっくり戻る。
+ * 左右対称の波形は脈として不自然で、数えるときの手がかりも弱くなる。
+ */
+@keyframes pulse-beat {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  12% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-point {
+    animation: none;
+  }
+}

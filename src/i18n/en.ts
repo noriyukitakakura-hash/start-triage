@@ -259,6 +259,17 @@ export const en: Messages = {
   'explain.crtBandDelayed': '{threshold} sec or more',
   'explain.crtBandWithinRange': 'under {threshold} sec',
 
+  // --- 狭い計測器セル用の短い文言 ---
+  'observation.instructionShort': 'Watch the chest\nand tap',
+  'crt.remaining': '{seconds}s left',
+  'crt.tooShortShort': 'Hold {seconds}s',
+  'crt.watchingShort': 'Tap when back',
+  'pulse.tapShort': 'Count beats',
+  'pulse.absentShort': 'None felt',
+  'vital.commandsShort': 'Commands',
+
+  'crt.pressHint': 'Press & hold',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',
 
