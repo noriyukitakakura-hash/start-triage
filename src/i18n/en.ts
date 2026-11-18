@@ -270,6 +270,10 @@ export const en: Messages = {
 
   'crt.pressHint': 'Press & hold',
 
+  // --- PWA ---
+  'pwa.updateAvailable': 'A new version is ready. Update when you finish the current drill.',
+  'pwa.update': 'Update',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',
 

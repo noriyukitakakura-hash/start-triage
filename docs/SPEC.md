@@ -445,7 +445,7 @@ export class InconsistentCaseError extends Error {}
 | タイマー精度 | `performance.now()` 基準、表示更新は100ms間隔（計測とは分離） |
 | 対応ブラウザ | Safari / Chrome / Edge 直近2メジャー、iOS Safari 17+、Android Chrome |
 | 画面 | スマホ縦持ち優先（360×640〜）。回答ボタンは親指到達域の下部に固定配置。タブレット/PCは2カラム |
-| オフライン | PWA。2回目以降は完全オフラインで全機能動作 |
+| オフライン | PWA。2回目以降は完全オフラインで全機能動作。サービスワーカーは `vite.sw-plugin.ts` が生成し、更新は利用者の明示操作で切り替える（訓練中に差し替えない） |
 
 ---
 

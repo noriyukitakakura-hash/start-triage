@@ -267,6 +267,10 @@ export const ja = {
 
   'crt.pressHint': '爪を長押し',
 
+  // --- PWA (SPEC §4.5) ---
+  'pwa.updateAvailable': '新しい版が利用できます。訓練の区切りで更新してください。',
+  'pwa.update': '更新',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',
 

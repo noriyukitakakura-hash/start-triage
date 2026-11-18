@@ -8,6 +8,7 @@ import type { TranslationKey } from '@/i18n/types';
 import { acknowledgeDisclaimer, hasAcknowledgedDisclaimer } from '@/lib/storage';
 import { DisclaimerDialog } from './DisclaimerDialog';
 import { SettingsSheet } from './SettingsSheet';
+import { UpdateNotice } from '@/components/UpdateNotice';
 import { useNavigate, useRoute, type Route } from './router';
 
 const SCREEN_TITLE: Record<Route, TranslationKey> = {
@@ -86,6 +87,7 @@ export function App() {
         onClose={() => setSettingsOpen(false)}
         onOpenDisclaimer={openDisclaimer}
       />
+      <UpdateNotice />
       <DisclaimerDialog
         open={disclaimerOpen}
         requireAcknowledgement={needsAcknowledgement}

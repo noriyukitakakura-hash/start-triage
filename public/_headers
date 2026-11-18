@@ -12,8 +12,14 @@
 /manifest.webmanifest
   Cache-Control: no-cache
 
-# OGP画像はファイル名にハッシュが付かない。差し替えが反映される程度に抑える
+# OGP画像とアイコンはファイル名にハッシュが付かない。差し替えが反映される程度に抑える
 /og-image.png
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/icons/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/apple-touch-icon.png
   Cache-Control: public, max-age=86400, must-revalidate
 
 /*

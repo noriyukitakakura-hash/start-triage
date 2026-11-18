@@ -2,9 +2,24 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
+import { serviceWorkerPlugin } from './vite.sw-plugin';
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // public/ 配下のうちオフライン動作に要るものを明示する。
+    // og-image.png はクローラ向けで、端末側では不要なので含めない
+    serviceWorkerPlugin({
+      extraAssets: [
+        '/manifest.webmanifest',
+        '/apple-touch-icon.png',
+        '/icons/icon-192.png',
+        '/icons/icon-512.png',
+        '/icons/icon-maskable-512.png',
+      ],
+    }),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
