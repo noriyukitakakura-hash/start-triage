@@ -1,11 +1,14 @@
 name: CI
 
-# docs/INFRA.md §2: テストの gate は Actions、配信は Cloudflare Pages が担う。
-# main へのマージ条件として下記ジョブを必須チェックに設定する。
+# docs/INFRA.md §2: テストを通過したものだけが本番へ出る。
+# 検証と配信を同じパイプラインに置き、`verify` が落ちたら `deploy` を走らせない。
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   verify:
@@ -21,3 +24,68 @@ jobs:
       - run: npm run lint
       - run: npm run test
       - run: npm run build
+
+      # **検証した成果物をそのまま配信する。** deploy 側で再ビルドすると
+      # 「テストを通したもの」と「配信するもの」が別物になり得る
+      - uses: actions/upload-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://start.keiku-labo.space/
+    # 配信中に次の配信を割り込ませない。途中で止めると不完全な状態が残り得る
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      # wrangler は devDependency にあり、版は package-lock.json で固定されている。
+      # サードパーティのアクションを増やさず、ローカルと同じ版で配信する
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      # トークン未設定のとき wrangler は分かりにくい認証エラーを出す。
+      # 何をすればよいかが読み取れる形で止める
+      - name: Check deploy credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          missing=""
+          [ -z "${CLOUDFLARE_API_TOKEN}" ] && missing="${missing} CLOUDFLARE_API_TOKEN"
+          [ -z "${CLOUDFLARE_ACCOUNT_ID}" ] && missing="${missing} CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "${missing}" ]; then
+            echo "::error::GitHub Secrets が未設定です:${missing}"
+            echo "::error::作り方は docs/INFRA.md §2「必要な秘密情報」を参照してください。"
+            echo "::error::トークンの権限は Account / Cloudflare Pages / Edit だけで足ります。"
+            exit 1
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler pages deploy dist \
+            --project-name=triage-start \
+            --branch=main \
+            --commit-hash="${GITHUB_SHA}" \
+            --commit-message="${GITHUB_SHA::7} $(git log -1 --pretty=%s)"

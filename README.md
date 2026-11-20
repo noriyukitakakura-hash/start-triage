@@ -65,9 +65,13 @@ Node は `.node-version`（22）に固定。CI・Cloudflare Pages も同バー�
 
 ## デプロイ
 
-`main` への push で Cloudflare Pages が自動ビルド・デプロイする。
-テストの gate は GitHub Actions（`.github/workflows/ci.yml`）が担い、
-`main` へのマージ必須チェックに設定する。詳細は [`docs/INFRA.md`](docs/INFRA.md) §2。
+`main` への push で GitHub Actions が検証し、通過したものだけを配信する
+（`.github/workflows/ci.yml`）。`verify` が落ちれば `deploy` は走らない。
+**検証した `dist` をそのまま配信する**ため、配信側では再ビルドしない。
+
+手元から配信する場合は `npm run deploy`。
+必要な Secrets と、Cloudflare の Git 連携を使わない理由は
+[`docs/INFRA.md`](docs/INFRA.md) §2 を参照。
 
 ## ライセンス
 

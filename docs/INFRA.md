@@ -25,30 +25,65 @@ VPSやコンテナを置くと、金額（月¥500〜1,000）以上に
 
 ---
 
-## 2. 推奨構成: Cloudflare Pages + Cloudflare DNS
+## 2. 構成: GitHub Actions から Cloudflare Pages へ配信
 
 ```
-GitHub  (repo: triage-start)
+GitHub  (repo: start-triage)
   │
-  ├── PR 作成 ──► GitHub Actions
-  │                 typecheck / lint / vitest
+  ├── PR 作成 ──► verify
+  │                 typecheck / lint / vitest / build
   │                 （generator の不変条件テスト 10,000回 を含む）
   │                 └─► 失敗なら main にマージ不可（ブランチ保護）
   │
-  └── main へ push ──► Cloudflare Pages（Git連携・設定ほぼゼロ）
-                         npm ci && npm run build  →  dist/
-                         ├─ Production : https://start.keiku-labo.space
-                         └─ Preview    : https://<hash>.triage-start.pages.dev （PRごとに自動）
+  └── main へ push ──► verify ──► deploy
+                         │          wrangler pages deploy dist
+                         │          └─► https://start.keiku-labo.space
+                         └─ dist を artifact で受け渡す
 
 Cloudflare DNS  (zone: keiku-labo.space)
-  └── CNAME  start  →  triage-start.pages.dev   (Proxied / オレンジ雲)
+  └── start.keiku-labo.space  →  triage-start.pages.dev
          └─ TLS証明書は Cloudflare が自動発行・自動更新
 ```
 
-**テストのgateはGitHub Actions、配信はCloudflare Pages** に分ける。
-`judge()` の正しさが製品価値そのものなので、テスト未通過のコードを本番へ出さない構造が必要。
-一方で `wrangler` のAPIトークン管理までやると手間が増えるため、デプロイはPagesのGit連携に任せる。
-この分担なら両方とも無料枠内で、秘密情報の管理もゼロ。
+**テストを通過したものだけが本番へ出る。** `judge()` の正しさが製品価値そのものであり、
+テスト未通過のコードを配信してはならない。`verify` が落ちれば `deploy` は走らない。
+
+**検証した成果物をそのまま配信する。** `verify` が作った `dist` を artifact で渡し、
+`deploy` 側では再ビルドしない。再ビルドすると「テストを通したもの」と「配信するもの」が
+別物になり得るため。
+
+### Cloudflare の Git 連携を使わない理由
+
+Cloudflare Pages の Git 連携は設定が楽だが、本プロジェクトでは採らない。
+
+1. **既存プロジェクトを変換できない。** Direct Upload で作ったプロジェクトは
+   Git 連携へ切り替えられず、新規作成とカスタムドメインの付け替えが要る。
+   稼働中のドメインに数分のダウンタイムが生じる。
+   > "If you choose Direct Upload, you cannot switch to Git integration later.
+   > You will have to create a new project with Git integration to use automatic deployments."
+2. **テストを配信の条件にしにくい。** Cloudflare 側のビルドはビルドコマンドの成否しか見ない。
+   `npm run build` に `npm run test` を混ぜれば止められるが、失敗の切り分けが悪くなる。
+   Actions なら「検証」と「配信」を別ジョブに分けたまま依存関係で縛れる。
+
+### 必要な秘密情報
+
+| 名前 | 用途 | 作り方 |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | `wrangler pages deploy` の認証 | Cloudflare ダッシュボード → My Profile → API Tokens → Create Token → Custom token。権限は **Account / Cloudflare Pages / Edit** のみ |
+| `CLOUDFLARE_ACCOUNT_ID` | 配信先アカウントの指定 | ダッシュボードのアカウント ID |
+
+リポジトリは公開なので、アカウント ID も Secrets に置く（資格情報ではないが露出させない）。
+
+```sh
+gh secret set CLOUDFLARE_API_TOKEN  --repo noriyukitakakura-hash/start-triage
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo noriyukitakakura-hash/start-triage
+```
+
+**トークンは Pages の Edit 権限だけに絞る。** 漏洩しても配信先の差し替えに留まり、
+DNS やゾーン設定には手が届かない。
+
+手元からの手動配信（`npm run deploy`）は引き続き使える。
+`wrangler login` の OAuth と Secrets のトークンは独立している。
 
 ### Cloudflare Pages を選ぶ理由
 1. **転送量が無制限・無課金。** 他の無料枠はおおむね100GB/月の上限があり、
@@ -114,7 +149,8 @@ Cloudflare DNS  (zone: keiku-labo.space)
      OGPは配信中の実URLを指していなければリンクカードが壊れる。
      **2026-11-15 に割り当て済み。正規URLは `https://start.keiku-labo.space/`。**
      `triage-start.pages.dev` でも同じ内容が見えるため `canonical` で正規化している
-5. GitHub でブランチ保護: `main` への直接pushを禁止、Actionsのtypecheck/lint/testを必須チェックに設定
+5. GitHub Secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を登録（§2 参照）
+6. GitHub でブランチ保護: `main` への直接pushを禁止、`verify` を必須チェックに設定
 
 > ゾーンをCloudflareに置かない場合も、外部DNSで
 > `start` の CNAME を `triage-start.pages.dev` に向ければカスタムドメインは機能する。
