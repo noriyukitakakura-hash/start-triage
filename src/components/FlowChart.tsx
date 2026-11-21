@@ -24,13 +24,13 @@ const STATUS_KEY = {
 const STATUS_STYLE = {
   passed: 'border-slate-600 bg-slate-800 text-slate-300',
   decided: 'border-sky-400 bg-sky-950 text-sky-100',
-  skipped: 'border-slate-800 bg-slate-900 text-slate-600',
+  skipped: 'border-slate-800 bg-slate-900 text-slate-400',
 } as const;
 
 const BADGE_STYLE = {
   passed: 'bg-slate-700 text-slate-200',
   decided: 'bg-sky-500 text-slate-950',
-  skipped: 'bg-slate-800 text-slate-500',
+  skipped: 'bg-slate-800 text-slate-400',
 } as const;
 
 function stepNameKey(step: DecidingStep): TranslationKey {
@@ -47,7 +47,7 @@ const STATUS_MARK = {
 const CHIP_STYLE = {
   passed: 'border-slate-600 bg-slate-800 text-slate-300',
   decided: 'border-sky-400 bg-sky-500 text-slate-950 font-bold',
-  skipped: 'border-slate-800 bg-slate-900 text-slate-600',
+  skipped: 'border-slate-800 bg-slate-900 text-slate-400',
 } as const;
 
 /**

@@ -51,7 +51,7 @@ export function CrtInstrument({ case: c, onMeasured, measured }: CrtInstrumentPr
               {measured.toFixed(1)} {t('vital.crt.unit')}
             </span>
           )}
-          {crt.phase === 'idle' && !crt.tooShort && <span className="text-slate-600">—</span>}
+          {crt.phase === 'idle' && !crt.tooShort && <span className="text-slate-400">—</span>}
         </span>
       }
       action={

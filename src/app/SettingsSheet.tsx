@@ -75,7 +75,7 @@ export function SettingsSheet({ open, onClose, onOpenDisclaimer }: SettingsSheet
               {Math.round(settings.boundaryRate * 100)}%
             </span>
           </div>
-          <p className="px-1 text-[11px] leading-tight text-slate-500">
+          <p className="px-1 text-[11px] leading-tight text-slate-400">
             {t('settings.boundaryRate.description')}
           </p>
         </fieldset>
@@ -138,7 +138,7 @@ function Toggle({
     <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-700 p-2">
       <div className="min-w-0">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-[11px] leading-tight text-slate-500">{description}</p>
+        <p className="text-[11px] leading-tight text-slate-400">{description}</p>
       </div>
       <button
         type="button"
@@ -148,7 +148,7 @@ function Toggle({
         onClick={() => onChange(!value)}
         className={[
           'min-h-9 shrink-0 rounded-lg px-3 text-xs font-semibold transition active:scale-95',
-          value ? 'bg-sky-600 text-white' : 'border border-slate-600 text-slate-300',
+          value ? 'bg-sky-700 text-white' : 'border border-slate-600 text-slate-300',
         ].join(' ')}
       >
         {t(value ? 'settings.on' : 'settings.off')}

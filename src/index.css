@@ -33,6 +33,28 @@ button {
 }
 
 /*
+ * フォーカスの可視化（SPEC §5.3）。
+ *
+ * ブラウザ既定のフォーカスリングは、暗い背景と彩度の高いボタン（赤・黄・緑）の
+ * 双方で十分な明暗差を得られない。爪の押下対象のように背景も枠も持たない
+ * ボタンでは、既定のリングがほぼ見えない。
+ *
+ * 白のリングに暗いオフセットを重ね、どの下地でも輪郭が立つようにする。
+ * `:focus-visible` に限るのは、マウス操作のたびにリングが出るのを避けるため。
+ */
+:where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-slate-50);
+  outline-offset: 2px;
+  /* 明るい下地（黄のボタンなど）でも輪郭が消えないよう、暗い縁取りを添える */
+  box-shadow: 0 0 0 5px var(--color-slate-900);
+}
+
+/* シート内は下地が一段明るいので、縁取りもそれに合わせる */
+.sheet :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  box-shadow: 0 0 0 5px var(--color-slate-800);
+}
+
+/*
  * ページ本体は絶対にスクロールさせない（docs/SPEC.md §5.1）。
  * ゴムバンド効果で画面全体が動くのも抑止する。
  */

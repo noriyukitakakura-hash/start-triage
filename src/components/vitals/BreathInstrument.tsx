@@ -40,18 +40,19 @@ export function BreathInstrument({ onChange }: BreathInstrumentProps) {
       figure={
         <div className="text-center font-mono text-[11px] leading-tight tabular-nums text-slate-400">
           {result.taps === 0 ? (
-            <span className="text-slate-500">{t('observation.instructionShort')}</span>
+            <span className="text-slate-400">{t('observation.instructionShort')}</span>
           ) : (
             <>
               <span className="block">
                 {t('observation.elapsedValue', { seconds: formatSeconds(result.spanMs) })}
               </span>
               <span className="block">{t('observation.tapsValue', { count: result.taps })}</span>
+              {/* WCAG 2.2 の最小タッチ目標 24x24 を満たす（SPEC §5.3） */}
               <button
                 type="button"
                 onClick={reset}
                 aria-label={t('observation.reset')}
-                className="mt-0.5 text-slate-500 underline"
+                className="mt-0.5 inline-flex size-6 items-center justify-center text-slate-400"
               >
                 <span aria-hidden>↺</span>
               </button>
@@ -62,7 +63,7 @@ export function BreathInstrument({ onChange }: BreathInstrumentProps) {
       readout={
         <span aria-live="polite" className="font-mono text-sm font-semibold tabular-nums">
           {result.estimatedRate === null ? (
-            <span className="text-xs font-normal text-slate-600">—</span>
+            <span className="text-xs font-normal text-slate-400">—</span>
           ) : (
             t('observation.estimatedValue', { rate: result.estimatedRate })
           )}
