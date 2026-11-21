@@ -122,6 +122,49 @@ describe('CRT: 圧迫時間が手技として要求される（docs/OBSERVATION.
     fireEvent.pointerUp(nail);
   });
 
+  it('押下中の残り時間はセルの外（上）に出る', async () => {
+    // スマートフォンでは押している指とその付け根が読み取り欄を覆ってしまう。
+    // 指は接触点より下に伸びるため、上へ逃がすほかない
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+
+    const nail = screen.getByRole('button', { name: '爪を押す' });
+    fireEvent.pointerDown(nail);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1200);
+    });
+
+    const readout = container.querySelector('[aria-live="polite"]') as HTMLElement;
+    expect(readout.textContent).toMatch(/残り/);
+    expect(readout.className, 'セルの上辺より外へ出していない').toContain('bottom-full');
+    expect(readout.className).toContain('absolute');
+    // 読み取りであって操作ではない。下の声かけボタンへのタップを奪ってはいけない
+    expect(readout.className).toContain('pointer-events-none');
+
+    fireEvent.pointerUp(nail);
+  });
+
+  it('残り時間を外に出しても読み上げ領域は作り直さない', async () => {
+    // 要素ごと差し替えると live region が再生成され、読み上げが落ちることがある
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const before = container.querySelector('[aria-live="polite"]');
+
+    const nail = screen.getByRole('button', { name: '爪を押す' });
+    fireEvent.pointerDown(nail);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1200);
+    });
+
+    expect(container.querySelector('[aria-live="polite"]')).toBe(before);
+    fireEvent.pointerUp(nail);
+  });
+
+  it('押していないときは読み取り欄に収まる（セルの高さを変えない）', () => {
+    const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
+    const readout = container.querySelector('[aria-live="polite"]') as HTMLElement;
+
+    expect(readout.className).not.toContain('absolute');
+  });
+
   it('爪床の色が戻る速さに症例のCRTが使われる', async () => {
     const { container } = wrap(<CrtInstrument case={PALPABLE} onMeasured={vi.fn()} measured={null} />);
 
