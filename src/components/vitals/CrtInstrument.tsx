@@ -13,6 +13,11 @@ import { useCrtMeasurement, type CrtPhase } from './useCrtMeasurement';
  *
  * 色が戻る速さは症例の値を `transition-duration` に渡して再現する。
  * **提示する速さが真値と一致していなければ誤った数値を教えることになる。**
+ *
+ * **圧迫中の残り秒数だけはセルの外（上）に出す。** 読み取り欄は図のすぐ下にあり、
+ * スマートフォンで爪を押すと、押している指とその付け根が覆ってしまって読めない。
+ * 指は接触点より下に伸びるため、上へ逃がすほかない。
+ * セルの上辺より外に絶対配置するので高さは増えず、スクロールも生まれない。
  */
 export interface CrtInstrumentProps {
   case: TriageCase;
@@ -24,6 +29,7 @@ export function CrtInstrument({ case: c, onMeasured, measured }: CrtInstrumentPr
   const { t } = useI18n();
   const prefersReducedMotion = usePrefersReducedMotion();
   const crt = useCrtMeasurement(onMeasured);
+  const pressing = crt.phase === 'pressing';
 
   return (
     <Instrument
@@ -38,12 +44,25 @@ export function CrtInstrument({ case: c, onMeasured, measured }: CrtInstrumentPr
         />
       }
       readout={
-        <span aria-live="polite" className="text-center text-[11px] leading-tight">
+        /*
+          読み上げ用の領域は同じ要素のまま位置だけを変える。要素ごと差し替えると
+          live region が作り直され、読み上げが落ちることがある
+        */
+        <span
+          aria-live="polite"
+          className={
+            pressing
+              ? 'pointer-events-none absolute inset-x-0 bottom-full z-10 mb-2 border border-sky-500 bg-slate-950 px-1 py-1.5 text-center leading-tight'
+              : 'text-center text-[11px] leading-tight'
+          }
+        >
           {crt.tooShort && (
             <span className="text-amber-300">{t('crt.tooShortShort', { seconds: CRT_PRESS_SECONDS })}</span>
           )}
-          {crt.phase === 'pressing' && (
-            <span className="font-mono tabular-nums">{t('crt.remaining', { seconds: crt.remaining })}</span>
+          {pressing && (
+            <span className="font-mono text-sm font-semibold tabular-nums text-sky-200">
+              {t('crt.remaining', { seconds: crt.remaining })}
+            </span>
           )}
           {crt.phase === 'refilling' && <span className="text-slate-400">{t('crt.watchingShort')}</span>}
           {crt.phase === 'measured' && measured !== null && (
