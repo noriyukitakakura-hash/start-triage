@@ -32,7 +32,10 @@ jobs:
         with:
           name: dist
           path: dist
-          retention-days: 1
+          # 配信が失敗した日の翌日以降でも再実行できる長さにする。
+          # 1日にしていたところ、トークン未設定で止まった配信を翌日に
+          # 再実行できず、成果物が消えていた
+          retention-days: 7
           if-no-files-found: error
 
   deploy:
