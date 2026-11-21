@@ -5,6 +5,7 @@ import { judge } from '@/domain/judge';
 import { JP_FDMA } from '@/domain/profiles';
 import { createRng, type Rng } from '@/domain/rng';
 import type { Category } from '@/domain/types';
+import type { VoicePrompt } from '@/domain/consciousness';
 import { CaseCard } from '@/components/CaseCard';
 import { CATEGORY_KEYS, CategoryButtons } from '@/components/CategoryButtons';
 import { EMPTY_COUNT, type CountResult } from '@/domain/tapCounting';
@@ -48,6 +49,7 @@ export function LearnMode() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [count, setCount] = useState<CountResult>(EMPTY_COUNT);
   const [measuredCrt, setMeasuredCrt] = useState<number | null>(null);
+  const [askedPrompts, setAskedPrompts] = useState<readonly VoicePrompt[]>([]);
 
   const judgement = useMemo(() => judge(item.case, profile), [item, profile]);
   const explanation = useMemo(() => explain(item.case, profile), [item, profile]);
@@ -68,6 +70,7 @@ export function LearnMode() {
     setAnswer(null);
     setCount(EMPTY_COUNT);
     setMeasuredCrt(null);
+    setAskedPrompts([]);
   }, [nextCase]);
 
   // キーボードショートカット（SPEC §5.2）。回答後はシートが受け持つ
@@ -98,6 +101,7 @@ export function LearnMode() {
         presentation={settings.vitalsPresentation}
         onCountChange={setCount}
         onCrtMeasured={setMeasuredCrt}
+        onVoiceAsked={setAskedPrompts}
       />
 
       <div className="shrink-0">
@@ -134,6 +138,7 @@ export function LearnMode() {
           expected={judgement.category}
           count={count}
           measuredCrt={measuredCrt}
+          askedPrompts={askedPrompts}
           profile={profile}
           showCountFeedback={settings.vitalsPresentation === 'observed'}
         />

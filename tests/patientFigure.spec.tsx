@@ -21,6 +21,7 @@ const BASE: TriageCase = {
   pulseRate: 88,
   crtSeconds: 1.2,
   obeysCommands: true,
+  nonObeyingResponse: null,
 };
 
 const make = (o: Partial<TriageCase>): TriageCase => ({ ...BASE, ...o });

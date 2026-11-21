@@ -22,6 +22,7 @@ const PALPABLE: TriageCase = {
   pulseRate: 120,
   crtSeconds: 2.8,
   obeysCommands: true,
+  nonObeyingResponse: null,
 };
 
 const NOT_PALPABLE: TriageCase = {

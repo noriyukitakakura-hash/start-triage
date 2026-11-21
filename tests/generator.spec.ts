@@ -55,6 +55,17 @@ function assertInternallyConsistent(g: GeneratedCase): void {
   expect(c.crtSeconds, `${where}: CRT が非現実的`).toBeLessThanOrEqual(4.0);
   expect(c.crtSeconds, `${where}: CRT に浮動小数誤差`).toBe(Number(c.crtSeconds.toFixed(1)));
 
+  // 従命の可否と反応の整合
+  if (c.obeysCommands) {
+    expect(c.nonObeyingResponse, `${where}: 従命できるなら反応の種別は持たない`).toBeNull();
+  } else {
+    expect(c.nonObeyingResponse, `${where}: 従命できないなら反応の種別を持つ`).not.toBeNull();
+    // **自発呼吸が無ければ声は出せない。** 無呼吸でうめき声を上げるのは矛盾
+    if (!c.hasSpontaneousBreathing) {
+      expect(c.nonObeyingResponse, `${where}: 無呼吸なのに発声している`).not.toBe('voiceOnly');
+    }
+  }
+
   // 歩行可能なら軽症域
   if (c.canWalk) {
     expect(c.obeysCommands, `${where}: 歩行可能なら指示に従える`).toBe(true);
@@ -634,5 +645,67 @@ describe('generator: 実測モードのCRTマージン', () => {
   it('マージンが大きすぎて通過域が空になる場合はエラー', () => {
     const rng = createRng('crt-margin-too-large');
     expect(() => generateCase({ target: 'II', crtMargin: 1.5 }, rng)).toThrow(RangeError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 意識: 声かけへの反応（SPEC §2.2）
+// ---------------------------------------------------------------------------
+
+describe('generator: 従命できない症例の反応', () => {
+  it(`${ITERATIONS.toLocaleString()}回: 従命の可否と反応が常に整合する`, () => {
+    const rng = createRng('consciousness-invariant');
+    const failures: string[] = [];
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const combo = VALID_COMBINATIONS[i % VALID_COMBINATIONS.length];
+      if (combo === undefined) continue;
+      const c = generateCase({ target: combo.target, decidingStep: combo.decidingStep }, rng).case;
+
+      if (c.obeysCommands && c.nonObeyingResponse !== null) {
+        failures.push(`#${i} 従命できるのに反応の種別を持つ: ${c.nonObeyingResponse}`);
+      }
+      if (!c.obeysCommands && c.nonObeyingResponse === null) {
+        failures.push(`#${i} 従命できないのに反応の種別が無い`);
+      }
+      if (!c.hasSpontaneousBreathing && c.nonObeyingResponse === 'voiceOnly') {
+        failures.push(`#${i} 無呼吸なのに発声している`);
+      }
+    }
+
+    expect(failures.slice(0, 5)).toEqual([]);
+    expect(failures).toHaveLength(0);
+  });
+
+  it('3種類の反応がいずれも生成される', () => {
+    const rng = createRng('consciousness-variety');
+    const seen = new Set<string>();
+    for (let i = 0; i < 3000; i++) {
+      const c = generateCase({ target: 'I', decidingStep: 'consciousness' }, rng).case;
+      if (c.nonObeyingResponse !== null) seen.add(c.nonObeyingResponse);
+    }
+    expect([...seen].sort()).toEqual(['movementOnly', 'none', 'voiceOnly']);
+  });
+
+  it('無呼吸の症例は体動か無反応のみ', () => {
+    const rng = createRng('consciousness-apneic');
+    const seen = new Set<string>();
+    for (let i = 0; i < 2000; i++) {
+      for (const target of ['I', '0'] as const) {
+        const c = generateCase({ target, decidingStep: 'airway' }, rng).case;
+        expect(c.nonObeyingResponse).not.toBe('voiceOnly');
+        if (c.nonObeyingResponse !== null) seen.add(c.nonObeyingResponse);
+      }
+    }
+    expect([...seen].sort()).toEqual(['movementOnly', 'none']);
+  });
+
+  it('II類（従命あり）は反応の種別を持たない', () => {
+    const rng = createRng('consciousness-obeys');
+    for (let i = 0; i < 1000; i++) {
+      const c = generateCase({ target: 'II' }, rng).case;
+      expect(c.obeysCommands).toBe(true);
+      expect(c.nonObeyingResponse).toBeNull();
+    }
   });
 });

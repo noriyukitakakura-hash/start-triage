@@ -23,6 +23,7 @@ const BREATHING: TriageCase = {
   pulseRate: 110,
   crtSeconds: 1.4,
   obeysCommands: true,
+  nonObeyingResponse: null,
 };
 
 const APNEIC: TriageCase = {
@@ -134,8 +135,13 @@ describe('実測モードは呼吸数の数値を画面に出さない', () => {
     expect(visible.some((x) => x.includes('36')), '呼吸数が漏れている').toBe(false);
     expect(visible.some((x) => x.includes('110')), '脈拍が漏れている').toBe(false);
     expect(visible.some((x) => x.includes('1.4')), 'CRTが漏れている').toBe(false);
-    // 判定に必要だが自分では測らない項目は従来どおり表示する
-    expect(visible.some((x) => x.includes('従える'))).toBe(true);
+    // 指示応答も声をかけて確かめる対象になったので、値を出さない
+    expect(visible.some((x) => x.includes('従える')), '指示応答が漏れている').toBe(false);
+  });
+
+  it('数値モードでは指示応答の値を表示する', () => {
+    renderCard(BREATHING, 'numeric');
+    expect(screen.getByText('従える')).toBeInTheDocument();
   });
 
   it('数値モードでは呼吸数を表示する', () => {
@@ -355,8 +361,10 @@ describe('アクセシビリティ', () => {
     const { container } = renderCard(BREATHING, 'observed');
     const srOnly = container.querySelector('dl.sr-only');
     expect(srOnly).toBeTruthy();
-    expect(srOnly?.querySelectorAll('dt')).toHaveLength(3);
+    // 呼吸数・CRT・橈骨動脈・指示応答の4項目
+    expect(srOnly?.querySelectorAll('dt')).toHaveLength(4);
     expect(srOnly?.textContent).toContain('36');
+    expect(srOnly?.textContent).toContain('従える');
   });
 
   it('確定したステップが aria-current で示される', async () => {

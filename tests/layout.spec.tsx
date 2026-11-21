@@ -121,6 +121,21 @@ describe('計測器の常時表示（SPEC §5.1）', () => {
     },
   );
 
+  it('声かけを重ねてもイラストの flex-1 を壊さない', async () => {
+    patchSettings({ vitalsPresentation: 'observed' });
+    const user = userEvent.setup();
+    const { container } = renderApp('/learn');
+    await dismissDisclaimer(user);
+
+    const voice = container.querySelector('[aria-label="声かけ"]') as HTMLElement;
+    // 重ねているので、イラストの高さ配分には影響しない
+    expect(voice.className).toContain('absolute');
+    expect(voice.closest('.case-figure')).not.toBeNull();
+
+    const figure = container.querySelector('svg.patient-figure') as HTMLElement;
+    expect(figure.getAttribute('class')).toContain('flex-1');
+  });
+
   it('計測器が症例ペイン内にあり、イラストが余剰高を吸収する構造を保つ', async () => {
     patchSettings({ vitalsPresentation: 'observed' });
     const user = userEvent.setup();

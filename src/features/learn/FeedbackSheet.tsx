@@ -2,6 +2,7 @@ import type { Explanation } from '@/domain/explain';
 import type { Category, RuleProfile, TriageCase } from '@/domain/types';
 import { breathingPatternOf } from '@/domain/breathing';
 import type { CountResult } from '@/domain/tapCounting';
+import type { VoicePrompt } from '@/domain/consciousness';
 import { FlowChartCompact } from '@/components/FlowChart';
 import { Sheet } from '@/components/Sheet';
 import { useI18n } from '@/i18n';
@@ -25,6 +26,8 @@ export interface FeedbackSheetProps {
   count: CountResult;
   /** 利用者が測った CRT（秒）。未測定は null */
   measuredCrt: number | null;
+  /** 利用者が行った声かけ */
+  askedPrompts: readonly VoicePrompt[];
   profile: RuleProfile;
   showCountFeedback: boolean;
 }
@@ -39,6 +42,7 @@ export function FeedbackSheet({
   expected,
   count,
   measuredCrt,
+  askedPrompts,
   profile,
   showCountFeedback,
 }: FeedbackSheetProps) {
@@ -98,7 +102,13 @@ export function FeedbackSheet({
         )}
 
         {showCountFeedback && (
-          <CountFeedback case={c} count={count} measuredCrt={measuredCrt} profile={profile} />
+          <CountFeedback
+            case={c}
+            count={count}
+            measuredCrt={measuredCrt}
+            askedPrompts={askedPrompts}
+            profile={profile}
+          />
         )}
       </div>
     </Sheet>

@@ -73,6 +73,8 @@ export function VitalsBar({
           <dd>{crtText}</dd>
           <dt>{t('vital.radialPulse')}</dt>
           <dd>{pulseText}</dd>
+          <dt>{t('vital.commands')}</dt>
+          <dd>{c.obeysCommands ? t('vital.commands.follows') : t('vital.commands.doesNotFollow')}</dd>
         </dl>
       )}
 

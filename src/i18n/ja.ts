@@ -271,6 +271,37 @@ export const ja = {
   'pwa.updateAvailable': '新しい版が利用できます。訓練の区切りで更新してください。',
   'pwa.update': '更新',
 
+  // --- 声かけ（SPEC §2.2） ---
+  'voice.heading': '声かけ',
+  'voice.hint': 'イラストの傷病者に声をかける',
+  'voice.prompt.callName': '聞こえますか？',
+  'voice.prompt.openEyes': '目を開けてください',
+  'voice.prompt.squeezeHand': '手を握ってください',
+  'voice.prompt.callName.short': '聞こえますか',
+  'voice.prompt.openEyes.short': '目を開けて',
+  'voice.prompt.squeezeHand.short': '手を握って',
+
+  // 従命あり
+  'voice.response.obeys.callName': '「はい」と答えた',
+  'voice.response.obeys.openEyes': '目を開けた',
+  'voice.response.obeys.squeezeHand': '手を握り返した',
+  // 声は出すが従わない
+  'voice.response.voiceOnly.callName': '「うう…」とうめいた',
+  'voice.response.voiceOnly.openEyes': 'うめくだけで目を開けない',
+  'voice.response.voiceOnly.squeezeHand': 'うめくだけで手は動かない',
+  // 体は動かすが従わない
+  'voice.response.movementOnly.callName': '身をよじった',
+  'voice.response.movementOnly.openEyes': '顔をしかめたが目は開けない',
+  'voice.response.movementOnly.squeezeHand': '手を払いのけた',
+  // 無反応
+  'voice.response.none': '反応がない',
+
+  // --- 解説の追加分 ---
+  'explain.voiceNotAsked': '声をかけていません。反応を見て従命の可否を確かめてください。',
+  'explain.voiceCallNameOnly': '呼名にしか応じていません。「目を開けて」などで従命を確かめてください。',
+  'explain.voiceRespondedButNotObeying': '反応はありましたが、指示には従えていません。反応があることと従命できることは別です。',
+  'explain.voiceObeyed': '指示に従えています。',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': '傷病者のイラスト',
 
