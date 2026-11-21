@@ -71,7 +71,7 @@ export function PulseInstrument({ case: c, onCounted }: PulseInstrumentProps) {
           {!palpable ? (
             <span className="text-amber-300">{t('pulse.absentShort')}</span>
           ) : result.estimatedRate === null ? (
-            <span className="font-mono tabular-nums text-slate-500">
+            <span className="font-mono tabular-nums text-slate-400">
               {result.taps === 0 ? '—' : t('observation.tapsValue', { count: result.taps })}
             </span>
           ) : (
@@ -79,7 +79,7 @@ export function PulseInstrument({ case: c, onCounted }: PulseInstrumentProps) {
               type="button"
               onClick={reset}
               aria-label={t('observation.reset')}
-              className="font-mono text-sm font-semibold tabular-nums"
+              className="inline-flex min-h-6 items-center px-1 font-mono text-sm font-semibold tabular-nums"
             >
               {t('pulse.measured', { rate: result.estimatedRate })}
             </button>

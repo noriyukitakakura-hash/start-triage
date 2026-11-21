@@ -28,7 +28,7 @@ export function UpdateNotice() {
         <button
           type="button"
           onClick={applyUpdate}
-          className="min-h-9 shrink-0 bg-sky-600 px-3 text-xs font-semibold text-white transition active:scale-95"
+          className="min-h-9 shrink-0 bg-sky-700 px-3 text-xs font-semibold text-white transition active:scale-95"
         >
           {t('pwa.update')}
         </button>

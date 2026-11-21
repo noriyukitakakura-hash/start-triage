@@ -32,7 +32,7 @@ export function RrPresentationSwitch() {
               <span className="block text-sm font-semibold">
                 {t(`settings.vitalsPresentation.${presentation}`)}
               </span>
-              <span className={['block text-xs', active ? 'text-slate-600' : 'text-slate-500'].join(' ')}>
+              <span className={['block text-xs', active ? 'text-slate-700' : 'text-slate-400'].join(' ')}>
                 {t(`settings.vitalsPresentation.${presentation}.description`)}
               </span>
             </button>

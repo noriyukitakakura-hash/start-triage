@@ -92,7 +92,7 @@ export function ResultScreen({
 
       {/* 各問の正誤。タップで解説を開く */}
       <div className="min-h-0 flex-1">
-        <p className="mb-1 text-center text-[11px] text-slate-500">{t('result.reviewHint')}</p>
+        <p className="mb-1 text-center text-[11px] text-slate-400">{t('result.reviewHint')}</p>
         <ol className="grid grid-cols-5 gap-1">
           {answers.map((a, index) => (
             <li key={a.item.case.id}>
@@ -130,10 +130,10 @@ export function ResultScreen({
             {t('result.share')}
           </button>
         ) : (
-          <p className="text-center text-[11px] text-slate-500">{t('result.shareHint')}</p>
+          <p className="text-center text-[11px] text-slate-400">{t('result.shareHint')}</p>
         )}
 
-        <p className="text-center text-[11px] text-slate-500">
+        <p className="text-center text-[11px] text-slate-400">
           {t(`result.mode.${presentation}`)}
           {best !== null && (
             <>
@@ -155,7 +155,7 @@ export function ResultScreen({
           <button
             type="button"
             onClick={onRetry}
-            className="min-h-12 flex-1 rounded-xl bg-sky-600 text-sm font-semibold text-white transition active:scale-95"
+            className="min-h-12 flex-1 rounded-xl bg-sky-700 text-sm font-semibold text-white transition active:scale-95"
           >
             {t('result.retry')}
           </button>

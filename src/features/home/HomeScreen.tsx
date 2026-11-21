@@ -31,10 +31,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (route: Route) => void 
         <dl className="grid grid-cols-2 gap-1 px-1 pt-1">
           {RR_PRESENTATIONS.map((presentation) => (
             <div key={presentation}>
-              <dt className="text-[11px] text-slate-500">{t(`home.bestTime.${presentation}`)}</dt>
+              <dt className="text-[11px] text-slate-400">{t(`home.bestTime.${presentation}`)}</dt>
               <dd className="font-mono text-sm tabular-nums">
                 {best[presentation] === null ? (
-                  <span className="text-slate-600">{t('home.noBestTime')}</span>
+                  <span className="text-slate-400">{t('home.noBestTime')}</span>
                 ) : (
                   <FormattedDuration ms={best[presentation]} />
                 )}
@@ -70,7 +70,7 @@ function ModeButton({
       onClick={onClick}
       className={[
         'w-full shrink-0 rounded-xl px-3 py-3 text-left transition active:scale-95',
-        primary ? 'bg-sky-600 text-white' : 'border border-slate-600 text-slate-200',
+        primary ? 'bg-sky-700 text-white' : 'border border-slate-600 text-slate-200',
       ].join(' ')}
     >
       <span className="block text-base font-bold">{label}</span>

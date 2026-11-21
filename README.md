@@ -55,7 +55,9 @@ Node は `.node-version`（22）に固定。CI・Cloudflare Pages も同バー�
    自発呼吸なしの症例だけに出すと、ボタンの有無が観察前に答えを漏らす。
    → `docs/OBSERVATION.md` §3.1。
 7. **実測モードのタイムは数値モードと比較しない。** 自己ベストは提示方式ごとに分離して記録する。
-   → `docs/OBSERVATION.md` §3.6。
+   → `docs/OBSERVATION.md` §3.8。
+8. **文字色は `slate-400` より暗くしない。** `slate-500` 以下はどの下地でも AA（4.5:1）に届かない。
+   → `tests/contrast.spec.ts` が生成CSSから実測して検査する。
 
 ## 依存関係のメモ
 

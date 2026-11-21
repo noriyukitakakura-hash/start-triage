@@ -6,6 +6,7 @@ import type { RrPresentation } from '@/lib/storage';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { BreathInstrument } from './BreathInstrument';
 import { CrtInstrument } from './CrtInstrument';
+import { INSTRUMENT_HEIGHT } from './Instrument';
 import { PulseInstrument } from './PulseInstrument';
 import './vitals.css';
 
@@ -94,17 +95,20 @@ export function VitalsBar({
   );
 }
 
-/** 数値モードのセル。計測器と同じ枠・同じ高さに数値だけを入れる */
+/**
+ * 数値モードのセル。計測器と同じ枠・同じ高さに数値だけを入れる。
+ *
+ * **`<dl>` の直下の `<div>` には `<dt>` と `<dd>` しか置けない。**
+ * 高さ合わせの空要素を混ぜると定義リストとして壊れるため、
+ * 高さは `<dd>` を伸ばして吸収する。
+ */
 function ValueInstrument({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-w-0 flex-col bg-slate-800">
+    <div className={`flex min-w-0 flex-col bg-slate-800 ${INSTRUMENT_HEIGHT}`}>
       <dt className="truncate px-1.5 pt-1 text-[10px] leading-none text-slate-400">{label}</dt>
-      <dd className="flex h-14 items-center justify-center px-1 text-center">
+      <dd className="flex flex-1 items-center justify-center px-1 pb-1 text-center">
         <span className="font-mono text-base font-semibold tabular-nums">{value}</span>
       </dd>
-      {/* 計測器と高さを揃える。モードを切り替えても配置が動かない */}
-      <div className="h-7" />
-      <div className="h-13 p-1" />
     </div>
   );
 }
