@@ -63,6 +63,22 @@ Node は `.node-version`（22）に固定。CI・Cloudflare Pages も同バー�
   `typescript-eslint` が依存する `minimatch` をパッチ版へ固定している。
   upstream が追従したら削除してよい。
 
+## 変更の進め方
+
+`main` は保護されており、**直接 push できない**（管理者も含む）。
+
+```sh
+git switch -c <branch>
+# 変更してコミット
+git push -u origin <branch>
+gh pr create --fill
+# verify が通ったらマージ
+gh pr merge --squash --delete-branch
+```
+
+必須チェックは `verify` のみ。`deploy` は main への push でしか走らないため、
+必須にすると PR が永久にマージできなくなる。詳細は [`docs/INFRA.md`](docs/INFRA.md) §2.1。
+
 ## デプロイ
 
 `main` への push で GitHub Actions が検証し、通過したものだけを配信する
