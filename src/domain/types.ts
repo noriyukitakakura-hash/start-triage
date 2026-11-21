@@ -55,7 +55,31 @@ export interface TriageCase {
   /** 毛細血管再充満時間（秒） */
   crtSeconds: number;
   obeysCommands: boolean;
+  /**
+   * 従命できない症例の反応。`obeysCommands === true` のときは null。
+   *
+   * `hasSpontaneousBreathing === false` のときだけ意味を持つ
+   * `breathingAfterAirway` と同じ扱い。
+   *
+   * **判定には使わない。** 従命の可否は `obeysCommands` が真値であり、
+   * これは声かけへの反応を描き分けるための情報。
+   */
+  nonObeyingResponse: NonObeyingResponse | null;
 }
+
+/**
+ * 従命できない症例の反応（SPEC §2.2）。
+ *
+ * **「反応がある」と「指示に従える」は違う。** うめき声も払いのけも反応だが
+ * 従命ではなく、START法ではいずれも I類 になる。取り違えやすい箇所なので、
+ * 反応の中身を描き分けて体験させる。
+ *
+ * - `voiceOnly`    声は出すが指示に従わない（うめき声など）
+ * - `movementOnly` 体は動かすが指示に従わない（払いのけるなど）
+ * - `none`         反応がない
+ */
+export const NON_OBEYING_RESPONSES = ['voiceOnly', 'movementOnly', 'none'] as const;
+export type NonObeyingResponse = (typeof NON_OBEYING_RESPONSES)[number];
 
 /** 判定根拠。表示層が t(key, params) で文章化する（docs/I18N.md §5） */
 export interface RationaleItem {

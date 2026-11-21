@@ -274,6 +274,37 @@ export const en: Messages = {
   'pwa.updateAvailable': 'A new version is ready. Update when you finish the current drill.',
   'pwa.update': 'Update',
 
+  // --- 声かけ ---
+  'voice.heading': 'Talk to the casualty',
+  'voice.hint': 'Speak to the patient in the illustration',
+  'voice.prompt.callName': 'Can you hear me?',
+  'voice.prompt.openEyes': 'Open your eyes',
+  'voice.prompt.squeezeHand': 'Squeeze my hand',
+  'voice.prompt.callName.short': 'Hear me?',
+  'voice.prompt.openEyes.short': 'Open eyes',
+  'voice.prompt.squeezeHand.short': 'Squeeze hand',
+
+  // 従命あり
+  'voice.response.obeys.callName': 'Answers "yes"',
+  'voice.response.obeys.openEyes': 'Opens their eyes',
+  'voice.response.obeys.squeezeHand': 'Squeezes back',
+  // 声は出すが従わない
+  'voice.response.voiceOnly.callName': 'Groans',
+  'voice.response.voiceOnly.openEyes': 'Only groans, eyes stay shut',
+  'voice.response.voiceOnly.squeezeHand': 'Only groans, hand does not move',
+  // 体は動かすが従わない
+  'voice.response.movementOnly.callName': 'Stirs',
+  'voice.response.movementOnly.openEyes': 'Grimaces but does not open their eyes',
+  'voice.response.movementOnly.squeezeHand': 'Pushes your hand away',
+  // 無反応
+  'voice.response.none': 'No response',
+
+  // --- 解説の追加分 ---
+  'explain.voiceNotAsked': 'You did not speak to the casualty. Check whether they follow commands.',
+  'explain.voiceCallNameOnly': 'They only answered to their name. Use "Open your eyes" to check for obedience.',
+  'explain.voiceRespondedButNotObeying': 'They responded, but did not follow the command. Responding and obeying are not the same.',
+  'explain.voiceObeyed': 'They followed the command.',
+
   // --- イラスト（答えを漏らさない中立な文言にとどめる。SPEC §5.3） ---
   'patient.figureLabel': 'Illustration of a casualty',
 

@@ -65,6 +65,7 @@ describe('crtBandOf: judge と同じ境界を使う', () => {
     pulseRate: 88,
     crtSeconds: 1.2,
     obeysCommands: true,
+    nonObeyingResponse: null,
   };
 
   it('閾値ちょうどは delayed、その直下は withinRange', () => {

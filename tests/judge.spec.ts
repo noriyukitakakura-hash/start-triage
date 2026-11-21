@@ -15,6 +15,7 @@ const BASE: TriageCase = {
   pulseRate: 88,
   crtSeconds: 1.2,
   obeysCommands: true,
+  nonObeyingResponse: null,
 };
 
 function make(overrides: Partial<TriageCase>): TriageCase {

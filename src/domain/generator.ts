@@ -1,7 +1,7 @@
 import { JP_FDMA } from './profiles';
 import { NON_WALKABLE_ILLUSTRATIONS, WALKABLE_ILLUSTRATIONS } from './illustrations';
 import type { Rng } from './rng';
-import type { Category, DecidingStep, RuleProfile, TriageCase } from './types';
+import { NON_OBEYING_RESPONSES, type Category, type DecidingStep, type NonObeyingResponse, type RuleProfile, type TriageCase } from './types';
 
 /**
  * 症例ジェネレータ（SPEC §3.3）。
@@ -81,6 +81,19 @@ const MIN_BREATHING_RR = 4;
 const RR_HIGH_SPAN = 14;
 /** 呼吸数の絶対上限。マージンを足しても超えない */
 const RR_ABS_MAX = 44;
+
+/**
+ * 従命できない症例の反応を選ぶ。
+ *
+ * **自発呼吸が無い症例は声を出せない。** 呼吸が無いのにうめき声を上げるのは
+ * 生理学的に矛盾するため、`voiceOnly` を候補から外す。
+ */
+function pickNonObeyingResponse(rng: Rng, hasSpontaneousBreathing: boolean): NonObeyingResponse {
+  const candidates = hasSpontaneousBreathing
+    ? NON_OBEYING_RESPONSES
+    : NON_OBEYING_RESPONSES.filter((r) => r !== 'voiceOnly');
+  return rng.pick(candidates);
+}
 /** 歩行可能な症例（III類）の軽症域。通過域との交差を取って使う */
 const RR_MILD_RANGE: readonly [number, number] = [12, 20];
 const CRT_MIN = 1.0;
@@ -160,6 +173,18 @@ function circulationFree(rng: Rng, profile: RuleProfile, margin: number): Circul
   // 実測モードでは通過域の上限が 1.5 秒なので、CRT が速い症例では脈拍を 120 未満に抑える
   const pulseRate = crtSeconds >= 1.5 ? rng.int(50, 150) : rng.int(50, 119);
   return { radialPulsePalpable: true, pulseRate, crtSeconds };
+}
+
+/** 従命の可否と、従命できない場合の反応を一括で決める */
+function consciousnessOf(
+  rng: Rng,
+  obeysCommands: boolean,
+  hasSpontaneousBreathing: boolean,
+): { obeysCommands: boolean; nonObeyingResponse: NonObeyingResponse | null } {
+  return {
+    obeysCommands,
+    nonObeyingResponse: obeysCommands ? null : pickNonObeyingResponse(rng, hasSpontaneousBreathing),
+  };
 }
 
 function rrPassRange(profile: RuleProfile, margin: number): [number, number] {
@@ -247,6 +272,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         // 歩行可能でも実測モードでは測られ得る。通過域に収めつつマージンを尊重する
         crtSeconds: circulationPass(rng, profile, false, crtMargin).crtSeconds,
         obeysCommands: true,
+        nonObeyingResponse: null,
       },
       target,
       decidingStep,
@@ -270,6 +296,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         respiratoryRate: 0,
         ...circulation,
         obeysCommands: false,
+        nonObeyingResponse: pickNonObeyingResponse(rng, false),
       },
       target,
       decidingStep,
@@ -291,7 +318,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         breathingAfterAirway: null,
         respiratoryRate: rrFail(rng, profile, boundary, rrMargin),
         ...circulation,
-        obeysCommands: rng.chance(0.5),
+        ...consciousnessOf(rng, rng.chance(0.5), true),
       },
       target,
       decidingStep,
@@ -317,7 +344,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
         breathingAfterAirway: null,
         respiratoryRate,
         ...circulationFail(rng, profile, crtBoundary, crtMargin),
-        obeysCommands: rng.chance(0.5),
+        ...consciousnessOf(rng, rng.chance(0.5), true),
       },
       target,
       decidingStep,
@@ -339,7 +366,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
       breathingAfterAirway: null,
       respiratoryRate,
       ...circulationPass(rng, profile, crtBoundary, crtMargin),
-      obeysCommands: target === 'II',
+      ...consciousnessOf(rng, target === 'II', true),
     },
     target,
     decidingStep,

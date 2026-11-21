@@ -3,6 +3,8 @@ import type { CountResult } from '@/domain/tapCounting';
 import type { TriageCase } from '@/domain/types';
 import { PatientFigure } from '@/components/patients';
 import { VitalsBar, shouldAnimateChest } from '@/components/vitals/VitalsBar';
+import { VoicePromptOverlay } from '@/components/vitals/VoicePromptOverlay';
+import type { VoicePrompt } from '@/domain/consciousness';
 import { useI18n } from '@/i18n';
 import type { TranslationKey } from '@/i18n/types';
 import type { RrPresentation } from '@/lib/storage';
@@ -28,9 +30,17 @@ export interface CaseCardProps {
   onCountChange?: (result: CountResult) => void;
   /** 利用者が測った CRT を親へ渡す（解説での誤差提示に使う） */
   onCrtMeasured?: (seconds: number) => void;
+  /** 利用者が行った声かけを親へ渡す（解説での指摘に使う） */
+  onVoiceAsked?: (prompts: VoicePrompt[]) => void;
 }
 
-export function CaseCard({ case: c, presentation, onCountChange, onCrtMeasured }: CaseCardProps) {
+export function CaseCard({
+  case: c,
+  presentation,
+  onCountChange,
+  onCrtMeasured,
+  onVoiceAsked,
+}: CaseCardProps) {
   const { t } = useI18n();
   const [airwayPerformed, setAirwayPerformed] = useState(false);
   const [measuredCrt, setMeasuredCrt] = useState<number | null>(null);
@@ -59,13 +69,20 @@ export function CaseCard({ case: c, presentation, onCountChange, onCrtMeasured }
 
   return (
     <article className="case-layout flex min-h-0 flex-1 flex-col gap-2">
-      {/* イラスト。余った高さを吸収する */}
+      {/* イラスト。余った高さを吸収する。声かけはここに重ねるので高さが増えない */}
       <div className="case-figure flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
-        <PatientFigure
-          case={c}
-          animate={shouldAnimateChest(c, presentation)}
-          className="min-h-0 w-full flex-1 text-slate-200"
-        />
+        {/*
+          重ねる範囲はイラストだけに限る。`.case-figure` 全体に重ねると
+          状況説明文をボタンが覆ってしまう
+        */}
+        <div className="relative flex min-h-0 w-full flex-1">
+          <PatientFigure
+            case={c}
+            animate={shouldAnimateChest(c, presentation)}
+            className="min-h-0 w-full flex-1 text-slate-200"
+          />
+          {observed && <VoicePromptOverlay case={c} onAsked={(p) => onVoiceAsked?.(p)} />}
+        </div>
         <p className="shrink-0 text-center text-xs leading-tight text-slate-200">
           {t(c.patient.situationKey as TranslationKey)}
         </p>
@@ -81,13 +98,23 @@ export function CaseCard({ case: c, presentation, onCountChange, onCrtMeasured }
           onPulseCounted={() => undefined}
         />
 
-        {/* 計測器ではない項目。細い行にまとめる */}
+        {/*
+          計測器ではない項目。細い行にまとめる。
+          実測モードでは指示応答の値を出さない。声をかけて確かめる対象であり、
+          呼吸数・CRT・脈拍と同じ扱いにする
+        */}
         <div className="flex items-center justify-between gap-2 bg-slate-800 px-2 py-1">
           <p className="min-w-0 truncate text-xs">
-            <span className="text-slate-400">{t('vital.commandsShort')} </span>
-            <span className="font-medium">
-              {c.obeysCommands ? t('vital.commands.follows') : t('vital.commands.doesNotFollow')}
-            </span>
+            {observed ? (
+              <span className="text-slate-400">{t('voice.hint')}</span>
+            ) : (
+              <>
+                <span className="text-slate-400">{t('vital.commandsShort')} </span>
+                <span className="font-medium">
+                  {c.obeysCommands ? t('vital.commands.follows') : t('vital.commands.doesNotFollow')}
+                </span>
+              </>
+            )}
           </p>
           {showAirwayButton && (
             <button

@@ -201,6 +201,20 @@ describe('キーボードでの到達性（SPEC §5.3）', () => {
     expect(reached.map(accessibleName)).toContain('確認しました');
   });
 
+  it('声かけボタンが Tab で到達でき、名前を持つ', async () => {
+    acknowledgeDisclaimer();
+    patchSettings({ vitalsPresentation: 'observed' });
+    const user = userEvent.setup();
+    mount('/learn');
+
+    const reached = await tabThrough(user);
+    const names = reached.map(accessibleName);
+
+    for (const expected of ['聞こえますか？', '目を開けてください', '手を握ってください']) {
+      expect(names, `${expected} に到達できない`).toContain(expected);
+    }
+  });
+
   it('CRT の圧迫がキーボードでも行える', () => {
     acknowledgeDisclaimer();
     patchSettings({ vitalsPresentation: 'observed' });

@@ -1,5 +1,6 @@
 import { respiratoryBandOf, type RespiratoryBand } from '@/domain/breathing';
 import { crtBandOf, type CrtBand } from '@/domain/circulation';
+import { hasConfirmedObedience, type VoicePrompt } from '@/domain/consciousness';
 import { judge } from '@/domain/judge';
 import type { RuleProfile, TriageCase } from '@/domain/types';
 import type { CountResult } from '@/domain/tapCounting';
@@ -20,6 +21,8 @@ export interface CountFeedbackProps {
   profile: RuleProfile;
   /** 利用者が測った CRT（秒）。未測定は null */
   measuredCrt?: number | null;
+  /** 利用者が行った声かけ */
+  askedPrompts?: readonly VoicePrompt[];
 }
 
 function bandKey(band: RespiratoryBand): TranslationKey {
@@ -34,7 +37,13 @@ function bandParams(band: RespiratoryBand, profile: RuleProfile): Record<string,
   return { low: profile.respiratoryRateLowMax, high: profile.respiratoryRateHighMin };
 }
 
-export function CountFeedback({ case: c, count, profile, measuredCrt = null }: CountFeedbackProps) {
+export function CountFeedback({
+  case: c,
+  count,
+  profile,
+  measuredCrt = null,
+  askedPrompts = [],
+}: CountFeedbackProps) {
   // **評価されなかった項目のフィードバックは出さない。**
   // 歩行可能で確定した症例に「CRTは2.8秒でした」と言っても雑音にしかならず、
   // 「判定に不要な情報を無視できる」という訓練の趣旨にも反する
@@ -52,7 +61,46 @@ export function CountFeedback({ case: c, count, profile, measuredCrt = null }: C
       {(circulationEvaluated || measuredCrt !== null) && (
         <CrtFeedback case={c} profile={profile} measuredCrt={measuredCrt} />
       )}
+      {decidingStep === 'consciousness' && <VoiceFeedback case={c} askedPrompts={askedPrompts} />}
     </div>
+  );
+}
+
+/**
+ * 声かけについての指摘。
+ *
+ * **「反応がある」と「指示に従える」は違う。** うめき声も払いのけも反応だが
+ * 従命ではなく、START法ではいずれも I類 になる。取り違えやすい箇所なので
+ * 明示的に言葉にする。
+ */
+function VoiceFeedback({
+  case: c,
+  askedPrompts,
+}: {
+  case: TriageCase;
+  askedPrompts: readonly VoicePrompt[];
+}) {
+  const { t } = useI18n();
+
+  if (askedPrompts.length === 0) {
+    return <p className="bg-slate-800 p-2 text-sm text-slate-300">{t('explain.voiceNotAsked')}</p>;
+  }
+
+  if (!hasConfirmedObedience(askedPrompts)) {
+    // 呼名だけでは反応の有無しか分からない
+    return <p className="bg-slate-800 p-2 text-sm text-amber-300">{t('explain.voiceCallNameOnly')}</p>;
+  }
+
+  if (c.obeysCommands) {
+    return <p className="bg-slate-800 p-2 text-sm text-green-300">{t('explain.voiceObeyed')}</p>;
+  }
+
+  return (
+    <p className="bg-slate-800 p-2 text-sm text-amber-300">
+      {c.nonObeyingResponse === 'none'
+        ? t('explain.voiceNotAsked')
+        : t('explain.voiceRespondedButNotObeying')}
+    </p>
   );
 }
 
