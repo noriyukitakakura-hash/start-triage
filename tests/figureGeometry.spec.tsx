@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { PatientFigure } from '@/components/patients';
 import { BREATH_AMPLITUDE } from '@/components/patients/breathing';
+import { HAIR_STYLES, appearanceFor, type HairStyle } from '@/components/patients/appearance';
 import { ILLUSTRATIONS } from '@/domain/illustrations';
 import { I18nProvider } from '@/i18n';
 import type { TriageCase } from '@/domain/types';
@@ -135,14 +136,29 @@ interface Geometry {
   guard: Rect;
   /** 四肢の標本点（ローカル座標） */
   limbPoints: Point[];
-  /** 頭部（ローカル座標） */
-  heads: { center: Point; r: number }[];
+  /** 頭部と髪（ローカル座標）。髪も胸郭に食い込んではいけない */
+  heads: { center: Point; r: number; what: string }[];
 }
 
-function geometryOf(illustrationId: string, situationKey: string): Geometry {
+/**
+ * その髪型になる症例IDを探す。
+ * 見た目は症例IDから決まる（appearance.ts）ので、IDを選ぶことで髪型を指定できる
+ */
+const ID_FOR_HAIR = new Map<HairStyle, string>(
+  HAIR_STYLES.map((hair) => {
+    for (let i = 0; i < 1000; i++) {
+      const id = `geometry-${i}`;
+      if (appearanceFor(id).hair === hair) return [hair, id];
+    }
+    throw new Error(`髪型 ${hair} になる症例IDが見つからない`);
+  }),
+);
+
+function geometryOf(illustrationId: string, situationKey: string, hair?: HairStyle): Geometry {
+  const id = hair === undefined ? BASE.id : (ID_FOR_HAIR.get(hair) as string);
   const { container } = render(
     <I18nProvider>
-      <PatientFigure case={{ ...BASE, patient: { illustrationId, situationKey } }} animate />
+      <PatientFigure case={{ ...BASE, id, patient: { illustrationId, situationKey } }} animate />
     </I18nProvider>,
   );
 
@@ -169,11 +185,22 @@ function geometryOf(illustrationId: string, situationKey: string): Geometry {
     sample(polylineOf(el.getAttribute('d') ?? '')).map((p) => toChestFrame(p, rotation)),
   );
 
-  // 頭部は円。頸部は矩形なので拾われない（頸部は胸郭に接していてよい）
-  const heads = [...container.querySelectorAll('circle.body')].map((el) => ({
-    center: toChestFrame({ x: num(el, 'cx'), y: num(el, 'cy') }, rotation),
-    r: num(el, 'r'),
-  }));
+  /*
+    頭部と髪はどちらも円。頸部は矩形なので拾われない（頸部は胸郭に接していてよい）。
+    髪は頭部グループの中で `translate` されているので、親の移動量を足して図の座標へ戻す。
+    体格の拡縮は一様なので、内外の関係を変えない。ここでは適用しなくてよい
+  */
+  const heads = [...container.querySelectorAll('circle.body, circle.hair')].map((el) => {
+    const group = el.parentElement?.closest('g[transform^="translate"]');
+    const t = /translate\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s*\)/.exec(group?.getAttribute('transform') ?? '');
+    const ox = t === null ? 0 : Number(t[1]);
+    const oy = t === null ? 0 : Number(t[2]);
+    return {
+      center: toChestFrame({ x: ox + num(el, 'cx'), y: oy + num(el, 'cy') }, rotation),
+      r: num(el, 'r'),
+      what: el.classList.contains('hair') ? '髪' : '頭部',
+    };
+  });
 
   return {
     inflated: { x, y: y - lift, w, h: h + lift },
@@ -227,16 +254,19 @@ describe('胸郭の契約（docs/OBSERVATION.md §5）', () => {
   );
 
   it.each(ILLUSTRATIONS.map((i) => [i.id, i] as const))(
-    '%s: 最大挙上した胸郭が頭部に食い込まない',
+    '%s: 最大挙上した胸郭が頭部にも髪にも食い込まない',
     (id, illustration) => {
-      const { inflated, heads } = geometryOf(id, illustration.situationKeys[0]);
+      // 髪型は全種類を試す。頭頂側へずらした円なので胸郭側へは出ないはずだが、
+      // それを前提にせず実際に測る
+      const heads = HAIR_STYLES.flatMap((hair) => geometryOf(id, illustration.situationKeys[0], hair).heads);
+      const { inflated } = geometryOf(id, illustration.situationKeys[0]);
       expect(heads.length, `${id}: 頭部が描かれていない`).toBeGreaterThan(0);
 
       for (const head of heads) {
         const clearance = distanceTo(head.center, inflated) - head.r;
         expect(
           clearance,
-          `${id}: 最大挙上時の頭部との間隔が ${clearance.toFixed(2)}px しかない`,
+          `${id}: 最大挙上時の${head.what}との間隔が ${clearance.toFixed(2)}px しかない`,
         ).toBeGreaterThanOrEqual(MIN_HEAD_CLEARANCE);
       }
     },

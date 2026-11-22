@@ -3,7 +3,8 @@ import type { TriageCase } from '@/domain/types';
 import { usePrefersReducedMotion } from '@/lib/usePrefersReducedMotion';
 import { useI18n } from '@/i18n';
 import { breathAnimationFor } from './breathing';
-import { FIGURES, FIGURE_VIEWBOX } from './figures';
+import { FIGURES, FIGURE_VIEWBOX, Ground, HeadGroup } from './figures';
+import { appearanceFor } from './appearance';
 import './breathing.css';
 
 export interface PatientFigureProps {
@@ -40,6 +41,20 @@ export function PatientFigure({ case: c, animate, className }: PatientFigureProp
   const animation = breathAnimationFor(pattern, c.respiratoryRate);
   const shouldAnimate = animate && !prefersReducedMotion && animation !== null;
 
+  /*
+   * 体格。**人物だけ**を接地点を支点に拡縮する。
+   *
+   * `.chest` は `transform-box: fill-box` なので、`transform-origin: center bottom` は
+   * **その要素自身のローカル座標系**のバウンディングボックスに対して解決される。
+   * 祖先の transform は影響しないため、ここで包んでも呼吸の向きも振幅も変わらない。
+   */
+  const appearance = appearanceFor(c.id);
+  const scale = parts.fixedScale === true ? 1 : appearance.buildScale;
+  const buildTransform =
+    scale === 1
+      ? undefined
+      : `translate(100 ${parts.groundY}) scale(${scale}) translate(-100 ${-parts.groundY})`;
+
   const chestProps = shouldAnimate
     ? {
         className: ['chest', animation.modifierClass].filter((v) => v !== null).join(' '),
@@ -60,20 +75,25 @@ export function PatientFigure({ case: c, animate, className }: PatientFigureProp
       /* 親の高さに追従させる。preserveAspectRatio の既定（xMidYMid meet）で縦横比を保つ */
       className={['patient-figure', 'h-full w-full', className].filter(Boolean).join(' ')}
     >
-      {parts.behind}
-      {/*
+      {/* 地面は拡縮の外。人物が大柄でも地面まで広がっては意味が変わる */}
+      <Ground y={parts.groundY} />
+      <g transform={buildTransform}>
+        {parts.behind}
+        {/*
         傾きは `.chest` の**外側**で与える。内側で回すと `.chest` の
         バウンディングボックスが回転後の軸平行外接矩形になり、
         `transform-origin: center bottom` が横隔膜ではなく最下の角を指す
       */}
-      {parts.chestRotate === undefined ? (
-        <g {...chestProps}>{parts.chest}</g>
-      ) : (
-        <g transform={`rotate(${parts.chestRotate.deg} ${parts.chestRotate.cx} ${parts.chestRotate.cy})`}>
+        {parts.chestRotate === undefined ? (
           <g {...chestProps}>{parts.chest}</g>
-        </g>
-      )}
-      {parts.front}
+        ) : (
+          <g transform={`rotate(${parts.chestRotate.deg} ${parts.chestRotate.cx} ${parts.chestRotate.cy})`}>
+            <g {...chestProps}>{parts.chest}</g>
+          </g>
+        )}
+        {parts.front}
+        <HeadGroup head={parts.head} hair={appearance.hair} />
+      </g>
     </svg>
   );
 }
