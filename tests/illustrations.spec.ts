@@ -8,6 +8,7 @@ import {
   WALKABLE_ILLUSTRATIONS,
   illustrationById,
 } from '@/domain/illustrations';
+import { FIGURES } from '@/components/patients/figures';
 
 /**
  * イラストカタログの不変条件（SPEC §3.4）。
@@ -56,6 +57,14 @@ describe('カタログの一意性', () => {
     expect(WALKABLE_ILLUSTRATIONS.length + NON_WALKABLE_ILLUSTRATIONS.length).toBe(ILLUSTRATIONS.length);
   });
 
+  it('10問セット内で図が重複しない数を確保している', () => {
+    // 10問の構成は I類4 / II類2 / III類2 / 0類1 / ランダム1（SPEC §2.4）。
+    // III類は歩行可能からのみ、それ以外は歩行不能からのみ引かれるため、
+    // 最悪ケースは歩行可能3問・歩行不能8問になる
+    expect(WALKABLE_ILLUSTRATIONS.length, '歩行可能が足りない').toBeGreaterThanOrEqual(3);
+    expect(NON_WALKABLE_ILLUSTRATIONS.length, '歩行不能が足りない').toBeGreaterThanOrEqual(8);
+  });
+
   it('illustrationById が引ける', () => {
     for (const illustration of ILLUSTRATIONS) {
       expect(illustrationById(illustration.id)).toBe(illustration);
@@ -81,8 +90,46 @@ describe('姿勢と、絵だけでは決められない症例', () => {
    * 増やすのは意図的な設計判断なので、明示した一覧と一致させて不意の追加を防ぐ。
    */
   it('絵だけでは決められないイラストが、意図した一覧と一致する', () => {
-    const expected = ['standing-waving', 'standing-unable'];
+    const expected = [
+      // 立位。歩けるとは限らない
+      'standing-waving',
+      'standing-unable',
+      // 座位。自力で歩いてきて座った人もいる
+      'sitting-after-walking',
+      'sitting-head-up',
+      'sitting-slumped',
+      // 壁にもたれている。休んでいるだけの人もいる
+      'leaning-wall-resting',
+      'leaning-wall',
+    ];
     expect(AMBIGUOUS_ILLUSTRATIONS.map((i) => i.id).sort()).toEqual([...expected].sort());
+  });
+
+  /**
+   * 歩行可・歩行不能にまたがる姿勢は、**同じ SVG を共有する**。
+   *
+   * 似た絵を別々に描くと、気づかぬうちに「うなだれていたら歩けない」といった
+   * 偽の手がかりを作り込んでしまう。同一オブジェクトならそれが起こり得ない。
+   *
+   * `standing` だけは例外。歩幅・腕の垂れ方という**意図した弱い手がかり**を
+   * 持たせてあり、これは状況文と突き合わせる訓練の入口として残す。
+   */
+  it('またがる姿勢は同じ図を共有する（standing を除く）', () => {
+    const SOFT_TELL_POSES = ['standing'];
+    const byPose = new Map<string, typeof ILLUSTRATIONS>();
+    for (const i of AMBIGUOUS_ILLUSTRATIONS) {
+      byPose.set(i.pose, [...(byPose.get(i.pose) ?? []), i]);
+    }
+
+    for (const [pose, group] of byPose) {
+      if (SOFT_TELL_POSES.includes(pose)) continue;
+      const walkable = group.filter((i) => i.canWalk);
+      const notWalkable = group.filter((i) => !i.canWalk);
+      for (const a of walkable) {
+        const shared = notWalkable.some((b) => FIGURES[a.id] === FIGURES[b.id]);
+        expect(shared, `${pose}: ${a.id} が歩行不能側と図を共有していない`).toBe(true);
+      }
+    }
   });
 
   it('絵だけでは決められない症例が多すぎない', () => {

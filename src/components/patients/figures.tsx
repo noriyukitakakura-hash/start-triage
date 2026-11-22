@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /**
- * 傷病者イラスト 13 種（SPEC §3.4 / docs/OBSERVATION.md §5）。
+ * 傷病者イラスト（SPEC §3.4 / docs/OBSERVATION.md §5）。
  *
  * 共通の規約:
  * - viewBox は `0 0 200 200`
@@ -158,6 +158,46 @@ const walkingSlowly: FigureParts = {
       <Limb d="M100 102 L111 142 L118 183" />
       <Limb d="M86 74 L70 102 L76 124" w={9} />
       <Limb d="M122 72 L134 98 L130 120" w={9} />
+    </>
+  ),
+};
+
+/** 頭を押さえて歩行 */
+const walkingCoveringHead: FigureParts = {
+  behind: <Ground />,
+  chest: <Chest x={85} y={56} w={30} h={44} rx={13} />,
+  front: (
+    <>
+      <Head cx={100} cy={30} r={14} />
+      <Neck x={94} y={42} />
+      <Limb d="M100 100 L86 142 L78 184" />
+      <Limb d="M100 100 L116 140 L126 184" />
+      <Limb d="M83 64 L68 88 L72 110" w={9} />
+      {/* 頭へ伸ばした腕。胸郭の右辺より外を通す */}
+      <Limb d="M122 64 L138 42 L118 26" w={9} />
+    </>
+  ),
+};
+
+/** 棒を支えにして歩行 */
+const walkingWithStick: FigureParts = {
+  behind: (
+    <>
+      <Ground />
+      {/* 杖代わりの棒 */}
+      <line x1={76} y1={100} x2={68} y2={186} strokeWidth={4} className="prop" />
+    </>
+  ),
+  chest: <Chest x={85} y={58} w={30} h={42} rx={13} />,
+  front: (
+    <>
+      <Head cx={100} cy={32} r={14} />
+      <Neck x={94} y={44} />
+      <Limb d="M100 100 L88 142 L80 184" />
+      <Limb d="M100 100 L114 140 L122 184" />
+      {/* 棒を握る腕 */}
+      <Limb d="M83 66 L72 96 L74 120" w={9} />
+      <Limb d="M117 66 L130 92 L128 116" w={9} />
     </>
   ),
 };
@@ -352,6 +392,104 @@ const standingUnable: FigureParts = {
  * `domain/illustrations.ts` の `id` と 1 対 1 で対応する。
  * 対応の網羅性は tests/patientFigure.spec.tsx が検証する。
  */
+/**
+ * 座位で上体を起こしている。
+ *
+ * **歩行可・歩行不能の両方の症例で使う。** 絵が答えを決めないことが狙いであり、
+ * 同じ図を共有することで「姿勢に手がかりがある」という誤学習を構造的に防ぐ。
+ */
+const sittingUpright: FigureParts = {
+  behind: <Ground />,
+  chest: <Chest x={78} y={92} w={30} h={44} rx={13} />,
+  front: (
+    <>
+      <Head cx={84} cy={66} r={14} />
+      <Neck x={81} y={76} w={12} h={16} />
+      {/* 前方へ投げ出した脚 */}
+      <Limb d="M96 136 L142 156 L166 160" />
+      <Limb d="M96 144 L138 170 L164 174" />
+      <Limb d="M76 104 L62 134 L70 160" w={9} />
+    </>
+  ),
+};
+
+/** 側臥位 */
+const lateralRecumbent: FigureParts = {
+  behind: <Ground y={172} />,
+  // 接地している側面が底辺。底辺固定で上方へ膨らむ＝胸郭の挙上
+  chest: <Chest x={72} y={122} w={52} h={46} rx={17} />,
+  front: (
+    <>
+      <Head cx={44} cy={146} r={15} />
+      <Neck x={58} y={140} w={14} h={12} />
+      {/* 引き寄せた脚 */}
+      <Limb d="M124 150 L158 140 L150 166" />
+      <Limb d="M124 160 L152 154 L146 174" />
+      {/* 腕は胸郭の可動域の外（下側と右側）へ */}
+      <Limb d="M100 164 L130 172 L152 168" w={9} />
+      <Limb d="M126 130 L150 122 L168 130" w={9} />
+    </>
+  ),
+};
+
+/** 四つ這い */
+const crawling: FigureParts = {
+  behind: <Ground y={182} />,
+  // 腹側が底辺。膨らむと背中が持ち上がる
+  chest: <Chest x={74} y={116} w={52} h={34} rx={15} />,
+  front: (
+    <>
+      <Head cx={44} cy={124} r={14} />
+      <Neck x={58} y={118} w={16} h={12} />
+      {/* 接地した四肢。付け根は動かない底辺に置く */}
+      <Limb d="M80 150 L74 166 L70 180" w={9} />
+      <Limb d="M92 150 L88 168 L84 180" w={9} />
+      <Limb d="M122 150 L132 166 L138 180" />
+      <Limb d="M134 150 L142 166 L148 180" />
+    </>
+  ),
+};
+
+/** 膝をついてうずくまる */
+const kneelingSlumped: FigureParts = {
+  behind: <Ground />,
+  chest: <Chest x={82} y={94} w={30} h={42} rx={13} />,
+  front: (
+    <>
+      <Head cx={82} cy={66} r={14} />
+      <Neck x={80} y={78} w={12} h={16} />
+      {/* 膝立ち。脛は後方へ折る */}
+      <Limb d="M97 136 L104 172 L86 182" />
+      <Limb d="M107 136 L116 172 L98 184" />
+      <Limb d="M80 104 L66 134 L72 160" w={9} />
+    </>
+  ),
+};
+
+/** 階段の途中に倒れている */
+const lyingOnStairs: FigureParts = {
+  behind: (
+    <>
+      <Ground y={182} />
+      {/* 段。枠外まで引いて、どの縮尺でも隙間が出ないようにする */}
+      <polygon points="136,182 136,158 160,158 160,134 184,134 184,110 210,110 210,182" className="prop-fill" />
+      <polyline points="136,182 136,158 160,158 160,134 184,134 184,110 210,110" strokeWidth={3} className="prop" />
+    </>
+  ),
+  chest: <Chest x={76} y={118} w={52} h={42} rx={16} />,
+  chestRotate: { deg: -10, cx: 102, cy: 160 },
+  front: (
+    <>
+      <Head cx={46} cy={140} r={15} />
+      <Neck x={60} y={136} w={14} h={12} />
+      {/* 段に乗った脚 */}
+      <Limb d="M128 146 L162 138 L180 146" />
+      <Limb d="M128 158 L160 152 L178 160" />
+      <Limb d="M104 162 L132 170 L154 166" w={9} />
+    </>
+  ),
+};
+
 export const FIGURES: Readonly<Record<string, FigureParts>> = {
   'walking-unaided': walkingUnaided,
   'walking-limping': walkingLimping,
@@ -366,4 +504,14 @@ export const FIGURES: Readonly<Record<string, FigureParts>> = {
   'trapped-vehicle': trappedVehicle,
   'sitting-against-debris': sittingAgainstDebris,
   'standing-unable': standingUnable,
+  'walking-covering-head': walkingCoveringHead,
+  'walking-with-stick': walkingWithStick,
+  'lateral-recumbent': lateralRecumbent,
+  'crawling': crawling,
+  'kneeling-slumped': kneelingSlumped,
+  'lying-on-stairs': lyingOnStairs,
+  // 絵だけでは歩行可否を決められない対。**同一のオブジェクトを共有する**
+  'sitting-after-walking': sittingUpright,
+  'sitting-head-up': sittingUpright,
+  'leaning-wall-resting': leaningWall,
 };

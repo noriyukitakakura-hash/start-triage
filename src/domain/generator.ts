@@ -451,7 +451,49 @@ export function generateQuizSet(rng: Rng, options: QuizSetOptions = {}): Generat
     boundaryCount++;
   }
 
+  diversifyPatients(items, rng);
+
   return items;
+}
+
+/**
+ * 1セット内でイラストが重複しないよう、**イラストと状況文だけ**を差し替える。
+ *
+ * `judge` は `patient` を一切見ないので、区分の構成比・確定ステップ・境界値の数に
+ * 影響しない。差し替えは同じ歩行可否のバケツ内に限るため `canWalk` との整合も崩れない。
+ *
+ * **境界値の補充ループより後に呼ぶ。** あのループは `generateCase` を呼び直して
+ * イラストを再抽選するため、先に走らせると重複が戻ってしまう。
+ *
+ * 候補が尽きたら重複を許す。変化は品質であって要件ではなく、
+ * ここで出題数を減らすほうが害が大きい。
+ */
+function diversifyPatients(items: GeneratedCase[], rng: Rng): void {
+  const usedIds = new Set<string>();
+  const usedKeys = new Set<string>();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item === undefined) continue;
+
+    const pool = item.case.canWalk ? WALKABLE_ILLUSTRATIONS : NON_WALKABLE_ILLUSTRATIONS;
+    let illustration = pool.find((p) => p.id === item.case.patient.illustrationId);
+    if (illustration === undefined || usedIds.has(illustration.id)) {
+      const free = pool.filter((p) => !usedIds.has(p.id));
+      if (free.length > 0) illustration = rng.pick(free);
+    }
+    if (illustration === undefined) continue;
+
+    const freeKeys = illustration.situationKeys.filter((k) => !usedKeys.has(k));
+    const situationKey = rng.pick(freeKeys.length > 0 ? freeKeys : illustration.situationKeys);
+
+    usedIds.add(illustration.id);
+    usedKeys.add(situationKey);
+    items[i] = {
+      ...item,
+      case: { ...item.case, patient: { illustrationId: illustration.id, situationKey } },
+    };
+  }
 }
 
 /**

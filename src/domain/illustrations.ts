@@ -30,6 +30,10 @@ export const POSES = [
   'pinned',
   'vehicle',
   'against-debris',
+  'lateral',
+  'crawling',
+  'kneeling',
+  'stairs',
 ] as const;
 export type Pose = (typeof POSES)[number];
 
@@ -74,6 +78,31 @@ export const ILLUSTRATIONS: readonly Illustration[] = [
     situationKeys: ['situation.walkedSlowlyOnOwn', 'situation.walkedSlowlyShortOfBreath'],
     canWalk: true,
   },
+  {
+    id: 'walking-covering-head',
+    pose: 'walking',
+    situationKeys: ['situation.walkedHoldingHead', 'situation.walkedWithHeadWound'],
+    canWalk: true,
+  },
+  {
+    id: 'walking-with-stick',
+    pose: 'walking',
+    situationKeys: ['situation.walkedUsingStick', 'situation.walkedUsingUmbrella'],
+    canWalk: true,
+  },
+  // 座っている・もたれている絵だが、**自力で歩いてきた**。絵が答えを決めない
+  {
+    id: 'sitting-after-walking',
+    pose: 'sitting-ground',
+    situationKeys: ['situation.walkedThenSatDown', 'situation.satDownAfterWalkingOut'],
+    canWalk: true,
+  },
+  {
+    id: 'leaning-wall-resting',
+    pose: 'leaning-wall',
+    situationKeys: ['situation.walkedThenLeanedOnWall', 'situation.restingOnWallAfterWalking'],
+    canWalk: true,
+  },
 
   // --- 歩行不能 ---
   {
@@ -116,6 +145,38 @@ export const ILLUSTRATIONS: readonly Illustration[] = [
     id: 'sitting-against-debris',
     pose: 'against-debris',
     situationKeys: ['situation.sittingAgainstDebris', 'situation.proppedOnDebrisCannotStand'],
+    canWalk: false,
+  },
+  {
+    id: 'lateral-recumbent',
+    pose: 'lateral',
+    situationKeys: ['situation.lyingOnSide', 'situation.lyingOnSideNotMoving'],
+    canWalk: false,
+  },
+  // 動いてはいるが歩行ではない。手順1を通過しない
+  {
+    id: 'crawling',
+    pose: 'crawling',
+    situationKeys: ['situation.crawlingCannotStand', 'situation.crawlingTowardExit'],
+    canWalk: false,
+  },
+  {
+    id: 'kneeling-slumped',
+    pose: 'kneeling',
+    situationKeys: ['situation.kneelingNotMoving', 'situation.kneelingCannotGetUp'],
+    canWalk: false,
+  },
+  {
+    id: 'lying-on-stairs',
+    pose: 'stairs',
+    situationKeys: ['situation.collapsedOnStairs', 'situation.fellDownStairs'],
+    canWalk: false,
+  },
+  // 座位で意識もはっきりしているが立てない。sitting-after-walking と同じ絵を使う
+  {
+    id: 'sitting-head-up',
+    pose: 'sitting-ground',
+    situationKeys: ['situation.sittingAlertCannotStand', 'situation.sittingWaitingCannotMove'],
     canWalk: false,
   },
   // 「立位だが歩行不能」。画像だけで判断させない訓練として重要（SPEC §7）

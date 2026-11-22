@@ -10,6 +10,7 @@ import {
 } from '@/domain/generator';
 import { JP_FDMA } from '@/domain/profiles';
 import { createRng } from '@/domain/rng';
+import { illustrationById } from '@/domain/illustrations';
 import { DECIDING_STEPS, type Category } from '@/domain/types';
 
 function tally(categories: Category[]): Record<Category, number> {
@@ -159,6 +160,36 @@ describe('generateQuizSet: 不変条件', () => {
     for (let i = 0; i < SETS; i++) {
       const ids = generateQuizSet(rng).map((g) => g.case.id);
       expect(new Set(ids).size).toBe(QUIZ_LENGTH);
+    }
+  });
+
+  it('1セット内でイラストが重複しない', () => {
+    // 同じ絵が2回出ると、前問の記憶で答えてしまう。
+    // カタログの種類数が十分であることは tests/illustrations.spec.ts が担保する
+    const rng = createRng('quiz-figures');
+    for (let i = 0; i < SETS; i++) {
+      const ids = generateQuizSet(rng).map((g) => g.case.patient.illustrationId);
+      expect(new Set(ids).size, `重複: ${ids.join(', ')}`).toBe(QUIZ_LENGTH);
+    }
+  });
+
+  it('1セット内で状況文も重複しない', () => {
+    const rng = createRng('quiz-situations');
+    for (let i = 0; i < SETS; i++) {
+      const keys = generateQuizSet(rng).map((g) => g.case.patient.situationKey);
+      expect(new Set(keys).size).toBe(QUIZ_LENGTH);
+    }
+  });
+
+  it('イラストの差し替えが歩行可否と矛盾しない', () => {
+    const rng = createRng('quiz-figure-consistency');
+    for (let i = 0; i < SETS; i++) {
+      for (const g of generateQuizSet(rng)) {
+        const illustration = illustrationById(g.case.patient.illustrationId);
+        expect(illustration, `未知のイラスト ${g.case.patient.illustrationId}`).toBeDefined();
+        expect(illustration?.canWalk, `${illustration?.id}: canWalk が矛盾`).toBe(g.case.canWalk);
+        expect(illustration?.situationKeys).toContain(g.case.patient.situationKey);
+      }
     }
   });
 
