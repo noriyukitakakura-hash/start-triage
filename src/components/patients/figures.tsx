@@ -19,54 +19,88 @@ import type { HairStyle } from './appearance';
  */
 
 /**
- * 髪・被り物。**頭部の円の裏に、頭頂側へずらした円を重ねる。**
+ * 髪。
  *
- * 半径を「頭部の半径 + ずらし量」にすると、**反頭頂側では頭部の縁とちょうど一致する。**
- * つまり胸郭の側へは一切はみ出さないので、頭部のクリアランス（2px以上）を
- * 髪型が侵食することがない。幾何テストもこの円をそのまま検査できる。
+ * **頭部の「上」に、生え際が見える形で描く。**
+ * 頭部は顔の描かれていない丸なので、裏に薄い円を敷いても
+ * 「少し大きい頭」にしか見えず、意味のある印と取り違えられる。
+ * 生え際の線が出て初めて髪と読める。
+ *
+ * **髪は頭頂側の半分に収める。** 頭部と胸郭の間隔は最小 3px しかない。
+ * 反頭頂側（胸郭のある側）へ伸ばすと呼吸の可動域に食い込む。
+ * 毛束も頭部の下端より下へは垂らさない。
+ *
+ * 形は多角形で作る。曲線コマンドは制御点の外側を通り得るため、
+ * 幾何テストが座標から安全性を検証できなくなる（四肢と同じ規約）。
  */
-const HAIR_OFFSETS: Record<Exclude<HairStyle, 'none'>, number> = {
-  short: 3,
-  full: 7,
-  bun: 4,
-  helmet: 5,
+
+/** 生え際の深さ。頭部の半径に対する比。大きいほど深く覆う */
+const HAIRLINE_DEPTH: Record<Exclude<HairStyle, 'none'>, number> = {
+  short: 0.0,
+  long: 0.12,
 };
+
+/** 髪の厚み（頭部の半径への上乗せ） */
+const HAIR_THICKNESS = 1.8;
+
+/**
+ * 頭頂側を覆う帽子状の多角形。
+ *
+ * 外周は頭部より少し大きい円に沿わせ、生え際は赤道から `depth`（頭部半径比）
+ * だけ下げた高さで水平に切る。切り口の直線がそのまま生え際に見える。
+ */
+function capPoints(r: number, depth: number): string {
+  const outer = r + HAIR_THICKNESS;
+  const cut = depth * r;
+  // y <= cut を満たす円弧。頭頂（y = -outer）を通る側を取る
+  const beta = Math.asin(Math.max(-1, Math.min(1, cut / outer)));
+  const from = Math.PI - beta;
+  const to = 2 * Math.PI + beta;
+
+  const steps = 18;
+  const points: string[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const angle = from + ((to - from) * i) / steps;
+    points.push(`${(outer * Math.cos(angle)).toFixed(2)},${(outer * Math.sin(angle)).toFixed(2)}`);
+  }
+  return points.join(' ');
+}
+
+/**
+ * 側頭部に沿って下ろす毛束。
+ *
+ * **頭部の下端より下へは出さない。** 下は胸郭のある側であり、
+ * 頭部と胸郭の間隔は最小 3px しかない。
+ * 外縁は頭部の円に沿わせて先細りにする。角が立つと髪に見えない。
+ */
+function lockPoints(r: number, side: 1 | -1): string {
+  const outer = r + HAIR_THICKNESS;
+  const inner = r * 0.68;
+  return [
+    [inner, -r * 0.42],
+    [outer * 0.99, -r * 0.3],
+    [outer, r * 0.2],
+    [outer * 0.86, r * 0.72],
+    [r * 0.62, r * 0.92],
+    [inner * 0.86, r * 0.6],
+  ]
+    .map(([x, y]) => `${((x as number) * side).toFixed(2)},${(y as number).toFixed(2)}`)
+    .join(' ');
+}
 
 function Hair({ hair, r, crownDeg }: { hair: HairStyle; r: number; crownDeg: number }) {
   if (hair === 'none') return null;
-  const offset = HAIR_OFFSETS[hair];
-  // 頭頂の向きへずらす。crownDeg は 0 が画面上
-  const rad = ((crownDeg - 90) * Math.PI) / 180;
-  const dx = Math.cos(rad) * offset;
-  const dy = Math.sin(rad) * offset;
-  const className = hair === 'helmet' ? 'hair hair--helmet' : 'hair';
-
-  // まとめ髪は、髪の円のさらに外へ出す。内側に置くと頭部の裏に隠れて見えない
-  const bunDistance = offset + r + r * 0.3;
 
   return (
-    <>
-      <circle cx={dx} cy={dy} r={r + offset} className={className} />
-      {hair === 'bun' && (
-        <circle
-          cx={Math.cos(rad) * bunDistance}
-          cy={Math.sin(rad) * bunDistance}
-          r={r * 0.42}
-          className="hair"
-        />
+    <g data-hair transform={`rotate(${crownDeg})`}>
+      <polygon points={capPoints(r, HAIRLINE_DEPTH[hair])} className="hair" />
+      {hair === 'long' && (
+        <>
+          <polygon points={lockPoints(r, -1)} className="hair" />
+          <polygon points={lockPoints(r, 1)} className="hair" />
+        </>
       )}
-      {hair === 'helmet' && (
-        /* つば。頭頂の向きに対して横一文字に入れる */
-        <line
-          x1={Math.cos(rad + Math.PI / 2) * (r + offset)}
-          y1={Math.sin(rad + Math.PI / 2) * (r + offset)}
-          x2={Math.cos(rad - Math.PI / 2) * (r + offset)}
-          y2={Math.sin(rad - Math.PI / 2) * (r + offset)}
-          strokeWidth={3}
-          className="hair--brim"
-        />
-      )}
-    </>
+    </g>
   );
 }
 
@@ -107,9 +141,10 @@ export function Ground({ y = 186, x1 = 14, x2 = 186 }: { y?: number; x1?: number
 /** 頭部と髪。髪は頭部の裏に敷くので、ここでまとめて描く */
 export function HeadGroup({ head, hair }: { head: FigureParts['head']; hair: HairStyle }) {
   return (
-    <g transform={`translate(${head.cx} ${head.cy})`}>
-      <Hair hair={hair} r={head.r} crownDeg={head.crownDeg ?? 0} />
+    <g data-head transform={`translate(${head.cx} ${head.cy})`}>
+      {/* 髪は頭部の**上**に重ねる。裏に敷くと生え際が出ず、髪と読めない */}
       <Head cx={0} cy={0} r={head.r} />
+      <Hair hair={hair} r={head.r} crownDeg={head.crownDeg ?? 0} />
     </g>
   );
 }

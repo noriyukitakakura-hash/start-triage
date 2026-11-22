@@ -136,8 +136,10 @@ interface Geometry {
   guard: Rect;
   /** 四肢の標本点（ローカル座標） */
   limbPoints: Point[];
-  /** 頭部と髪（ローカル座標）。髪も胸郭に食い込んではいけない */
+  /** 頭部（ローカル座標）。円で表される */
   heads: { center: Point; r: number; what: string }[];
+  /** 髪の多角形の頂点（ローカル座標）。髪も胸郭に食い込んではいけない */
+  hairPoints: Point[];
 }
 
 /**
@@ -190,23 +192,52 @@ function geometryOf(illustrationId: string, situationKey: string, hair?: HairSty
     髪は頭部グループの中で `translate` されているので、親の移動量を足して図の座標へ戻す。
     体格の拡縮は一様なので、内外の関係を変えない。ここでは適用しなくてよい
   */
-  const heads = [...container.querySelectorAll('circle.body, circle.hair')].map((el) => {
-    const group = el.parentElement?.closest('g[transform^="translate"]');
-    const t = /translate\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s*\)/.exec(group?.getAttribute('transform') ?? '');
-    const ox = t === null ? 0 : Number(t[1]);
-    const oy = t === null ? 0 : Number(t[2]);
-    return {
-      center: toChestFrame({ x: ox + num(el, 'cx'), y: oy + num(el, 'cy') }, rotation),
-      r: num(el, 'r'),
-      what: el.classList.contains('hair') ? '髪' : '頭部',
-    };
-  });
+  /*
+    頭部グループは `data-head` で引く。体格の拡縮も translate を持つので、
+    属性セレクタで取ると取り違える。
+    体格の拡縮は一様なので内外の関係を変えず、ここでは無視してよい
+  */
+  const headGroup = container.querySelector('[data-head]');
+  const ht = /translate\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s*\)/.exec(headGroup?.getAttribute('transform') ?? '');
+  const ox = ht === null ? 0 : Number(ht[1]);
+  const oy = ht === null ? 0 : Number(ht[2]);
+
+  const hairGroup = container.querySelector('[data-hair]');
+  const hr = /rotate\(\s*(-?[\d.]+)\s*\)/.exec(hairGroup?.getAttribute('transform') ?? '');
+  const crown = hr === null ? 0 : (Number(hr[1]) * Math.PI) / 180;
+
+  /** 頭部ローカル（頭頂の回転込み）→ 図の座標 → 胸郭ローカル */
+  const fromHead = (px: number, py: number, rotated: boolean): Point =>
+    toChestFrame(
+      rotated
+        ? { x: ox + px * Math.cos(crown) - py * Math.sin(crown), y: oy + px * Math.sin(crown) + py * Math.cos(crown) }
+        : { x: ox + px, y: oy + py },
+      rotation,
+    );
+
+  const hairPoints = [...container.querySelectorAll('polygon.hair')].flatMap((el) =>
+    (el.getAttribute('points') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((pair) => {
+        const [px, py] = pair.split(',').map(Number) as [number, number];
+        return fromHead(px, py, true);
+      }),
+  );
+
+  // 頭部。頸部は矩形なので拾われない（頸部は胸郭に接していてよい）
+  const heads = [...container.querySelectorAll('circle.body')].map((el) => ({
+    center: fromHead(num(el, 'cx'), num(el, 'cy'), false),
+    r: num(el, 'r'),
+    what: '頭部',
+  }));
 
   return {
     inflated: { x, y: y - lift, w, h: h + lift },
     guard: { x, y: y - lift, w, h: lift + h * GUARDED_FRACTION },
     limbPoints,
     heads,
+    hairPoints,
   };
 }
 
@@ -268,6 +299,17 @@ describe('胸郭の契約（docs/OBSERVATION.md §5）', () => {
           clearance,
           `${id}: 最大挙上時の${head.what}との間隔が ${clearance.toFixed(2)}px しかない`,
         ).toBeGreaterThanOrEqual(MIN_HEAD_CLEARANCE);
+      }
+
+      // 髪の各頂点も同じ間隔を空ける。多角形なので頂点を見れば十分
+      const hairPoints = HAIR_STYLES.flatMap(
+        (hair) => geometryOf(id, illustration.situationKeys[0], hair).hairPoints,
+      );
+      for (const p of hairPoints) {
+        const clearance = distanceTo(p, inflated);
+        expect(clearance, `${id}: 髪が最大挙上時の胸郭に ${clearance.toFixed(2)}px まで迫る`).toBeGreaterThanOrEqual(
+          MIN_HEAD_CLEARANCE,
+        );
       }
     },
   );
