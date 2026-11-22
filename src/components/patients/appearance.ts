@@ -9,8 +9,14 @@
  * 乱数を描画時に引くと、計測の途中で別人に変わってしまう。
  */
 
-/** 髪型・被り物。判定とは無関係であり、歩行可否と相関させてはならない */
-export const HAIR_STYLES = ['short', 'full', 'bun', 'helmet', 'none'] as const;
+/**
+ * 髪型。判定とは無関係であり、歩行可否と相関させてはならない。
+ *
+ * **髪と一目で分かる形だけを置く。** トリアージの訓練で頭部に意味の読めない印が
+ * あると、包帯や頭部外傷といった所見として読まれかねない。
+ * 判定に関わらないものが所見に見えるのは、見た目が単調であることより悪い。
+ */
+export const HAIR_STYLES = ['short', 'long', 'none'] as const;
 export type HairStyle = (typeof HAIR_STYLES)[number];
 
 /**
