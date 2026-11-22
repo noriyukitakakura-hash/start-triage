@@ -1,5 +1,5 @@
 import { JP_FDMA } from './profiles';
-import { NON_WALKABLE_ILLUSTRATIONS, WALKABLE_ILLUSTRATIONS } from './illustrations';
+import { NON_WALKABLE_ILLUSTRATIONS, WALKABLE_ILLUSTRATIONS, type Illustration } from './illustrations';
 import type { Rng } from './rng';
 import { NON_OBEYING_RESPONSES, type Category, type DecidingStep, type NonObeyingResponse, type RuleProfile, type TriageCase } from './types';
 
@@ -241,6 +241,16 @@ function rrFail(rng: Rng, profile: RuleProfile, boundary: boolean, margin: numbe
  *
  * @throws {ImpossibleCombinationError} target と decidingStep の組み合わせが成立しない場合
  */
+/**
+ * イラストと状況文を決める。
+ *
+ * **状況文は候補から1つ抽選して症例に固定する。** 再描画のたびに文が変わると、
+ * 計測の途中で表示が入れ替わってしまう。症例は生成後に不変であるべきである。
+ */
+function buildPatient(rng: Rng, illustration: Illustration): TriageCase['patient'] {
+  return { illustrationId: illustration.id, situationKey: rng.pick(illustration.situationKeys) };
+}
+
 export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase {
   const profile = options.profile ?? JP_FDMA;
   const boundaryRate = options.boundaryRate ?? DEFAULT_BOUNDARY_RATE;
@@ -257,12 +267,12 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
 
   // --- 手順1: 歩行 ---
   if (decidingStep === 'walk') {
-    const illustration = rng.pick(WALKABLE_ILLUSTRATIONS);
+    const walkablePatient = buildPatient(rng, rng.pick(WALKABLE_ILLUSTRATIONS));
     // 歩行可能な症例は他のバイタルも軽症域で生成する（SPEC §3.3 整合性制約）
     return {
       case: {
         id,
-        patient: { illustrationId: illustration.id, situationKey: illustration.situationKey },
+        patient: walkablePatient,
         canWalk: true,
         hasSpontaneousBreathing: true,
         breathingAfterAirway: null,
@@ -280,8 +290,7 @@ export function generateCase(options: GenerateOptions, rng: Rng): GeneratedCase 
     };
   }
 
-  const illustration = rng.pick(NON_WALKABLE_ILLUSTRATIONS);
-  const patient = { illustrationId: illustration.id, situationKey: illustration.situationKey };
+  const patient = buildPatient(rng, rng.pick(NON_WALKABLE_ILLUSTRATIONS));
 
   // --- 手順2: 自発呼吸と気道確保 ---
   if (decidingStep === 'airway') {
@@ -442,7 +451,49 @@ export function generateQuizSet(rng: Rng, options: QuizSetOptions = {}): Generat
     boundaryCount++;
   }
 
+  diversifyPatients(items, rng);
+
   return items;
+}
+
+/**
+ * 1セット内でイラストが重複しないよう、**イラストと状況文だけ**を差し替える。
+ *
+ * `judge` は `patient` を一切見ないので、区分の構成比・確定ステップ・境界値の数に
+ * 影響しない。差し替えは同じ歩行可否のバケツ内に限るため `canWalk` との整合も崩れない。
+ *
+ * **境界値の補充ループより後に呼ぶ。** あのループは `generateCase` を呼び直して
+ * イラストを再抽選するため、先に走らせると重複が戻ってしまう。
+ *
+ * 候補が尽きたら重複を許す。変化は品質であって要件ではなく、
+ * ここで出題数を減らすほうが害が大きい。
+ */
+function diversifyPatients(items: GeneratedCase[], rng: Rng): void {
+  const usedIds = new Set<string>();
+  const usedKeys = new Set<string>();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item === undefined) continue;
+
+    const pool = item.case.canWalk ? WALKABLE_ILLUSTRATIONS : NON_WALKABLE_ILLUSTRATIONS;
+    let illustration = pool.find((p) => p.id === item.case.patient.illustrationId);
+    if (illustration === undefined || usedIds.has(illustration.id)) {
+      const free = pool.filter((p) => !usedIds.has(p.id));
+      if (free.length > 0) illustration = rng.pick(free);
+    }
+    if (illustration === undefined) continue;
+
+    const freeKeys = illustration.situationKeys.filter((k) => !usedKeys.has(k));
+    const situationKey = rng.pick(freeKeys.length > 0 ? freeKeys : illustration.situationKeys);
+
+    usedIds.add(illustration.id);
+    usedKeys.add(situationKey);
+    items[i] = {
+      ...item,
+      case: { ...item.case, patient: { illustrationId: illustration.id, situationKey } },
+    };
+  }
 }
 
 /**

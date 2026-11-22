@@ -65,8 +65,16 @@ describe('I18N.md §9-5: ドメイン層が生成するキーの実在性', () =
   });
 
   it('イラストカタログの全状況文キーが存在する', () => {
-    const missing = ILLUSTRATIONS.map((i) => i.situationKey).filter((k) => !keys.includes(k));
+    const missing = ILLUSTRATIONS.flatMap((i) => i.situationKeys).filter((k) => !keys.includes(k));
     expect(missing).toEqual([]);
+  });
+
+  it('どのイラストからも参照されない状況文キーがない', () => {
+    // 孤児キーは「増やしたつもりが繋がっていない」ことの兆候であり、
+    // 画面には一生出ないまま翻訳の手間だけがかかる
+    const referenced = new Set(ILLUSTRATIONS.flatMap((i) => i.situationKeys));
+    const orphans = keys.filter((k) => k.startsWith('situation.') && !referenced.has(k));
+    expect(orphans).toEqual([]);
   });
 
   it('全 DecidingStep のステップ名キーが存在する', () => {

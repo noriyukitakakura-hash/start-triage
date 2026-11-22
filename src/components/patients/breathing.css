@@ -26,6 +26,30 @@
   stroke-linejoin: round;
 }
 
+/* 髪。頭部の裏に敷くので、わずかに濃くして輪郭を出す */
+/*
+ * 髪。頭部の裏に敷き、はみ出した分だけが見える。
+ * 頭部（不透明）との差を出すために透かす
+ */
+.patient-figure .hair {
+  fill: currentColor;
+  opacity: 0.55;
+}
+
+/* 被り物。髪より硬い印象にするため輪郭を付ける */
+.patient-figure .hair--helmet {
+  opacity: 0.38;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.patient-figure .hair--brim {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
 .patient-figure .prop {
   fill: none;
   stroke: currentColor;
