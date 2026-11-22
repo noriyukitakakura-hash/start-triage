@@ -72,16 +72,16 @@ describe('カタログとコンポーネントの対応（SPEC §3.4）', () => 
     expect(extra).toEqual([]);
   });
 
-  it('13種すべてが実装されている', () => {
-    expect(Object.keys(FIGURES)).toHaveLength(13);
-    expect(ILLUSTRATIONS).toHaveLength(13);
+  it('カタログと図形の数が一致する', () => {
+    // 数そのものは増え続けるので固定しない。過不足は上2件の検査が担う
+    expect(new Set(ILLUSTRATIONS.map((i) => i.id)).size).toBe(Object.keys(FIGURES).length);
   });
 
-  it('全13種が例外なく描画でき、胸郭グループを持つ', () => {
+  it('全イラストが例外なく描画でき、胸郭グループを持つ', () => {
     for (const illustration of ILLUSTRATIONS) {
       const { chest } = renderFigure(
         make({
-          patient: { illustrationId: illustration.id, situationKey: illustration.situationKey },
+          patient: { illustrationId: illustration.id, situationKey: illustration.situationKeys[0] },
           canWalk: illustration.canWalk,
         }),
       );
@@ -233,7 +233,7 @@ describe('アクセシビリティ', () => {
     for (const illustration of ILLUSTRATIONS) {
       const { container } = renderFigure(
         make({
-          patient: { illustrationId: illustration.id, situationKey: illustration.situationKey },
+          patient: { illustrationId: illustration.id, situationKey: illustration.situationKeys[0] },
           canWalk: illustration.canWalk,
         }),
       );

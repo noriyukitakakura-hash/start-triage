@@ -9,7 +9,7 @@ import {
   type GeneratedCase,
 } from '@/domain/generator';
 import { JP_FDMA, US_START } from '@/domain/profiles';
-import { ILLUSTRATIONS } from '@/domain/illustrations';
+import { ALL_SITUATION_KEYS, ILLUSTRATIONS } from '@/domain/illustrations';
 import { createRng } from '@/domain/rng';
 import { CATEGORIES, DECIDING_STEPS, type Category, type DecidingStep } from '@/domain/types';
 
@@ -24,7 +24,7 @@ function assertInternallyConsistent(g: GeneratedCase): void {
   const illustration = ILLUSTRATIONS.find((i) => i.id === c.patient.illustrationId);
   expect(illustration, `${where}: 未知のイラストID ${c.patient.illustrationId}`).toBeDefined();
   expect(illustration?.canWalk, `${where}: イラストと canWalk が矛盾`).toBe(c.canWalk);
-  expect(illustration?.situationKey, `${where}: 状況文キーが不一致`).toBe(c.patient.situationKey);
+  expect(illustration?.situationKeys, `${where}: 状況文キーがカタログ外`).toContain(c.patient.situationKey);
 
   // 自発呼吸と呼吸数・気道確保の整合
   if (c.hasSpontaneousBreathing) {
@@ -131,6 +131,45 @@ describe('generator: 不変条件（SPEC §3.3）', () => {
       const target = CATEGORIES[i % CATEGORIES.length] as Category;
       const g = generateCase({ target }, rng);
       expect(() => judge(g.case, JP_FDMA)).not.toThrow();
+    }
+  });
+});
+
+describe('generator: イラストと状況文の到達性', () => {
+  it(`${ITERATIONS.toLocaleString()}回で全イラストと全状況文が少なくとも1回出る`, () => {
+    // 抽選が片寄っていても「カタログにある」検査だけは通ってしまう。
+    // **増やした項目が実際に出題されること**は別に確かめる必要がある
+    const rng = createRng('coverage');
+    const ids = new Set<string>();
+    const keys = new Set<string>();
+
+    for (let i = 0; i < ITERATIONS; i++) {
+      const g = generateCase({ target: CATEGORIES[i % CATEGORIES.length] as Category }, rng);
+      ids.add(g.case.patient.illustrationId);
+      keys.add(g.case.patient.situationKey);
+    }
+
+    expect(ILLUSTRATIONS.map((i) => i.id).filter((id) => !ids.has(id))).toEqual([]);
+    expect(ALL_SITUATION_KEYS.filter((k) => !keys.has(k))).toEqual([]);
+  });
+
+  it('同じイラストでも状況文は複数現れる', () => {
+    const rng = createRng('variety');
+    const byId = new Map<string, Set<string>>();
+
+    for (let i = 0; i < 2_000; i++) {
+      const g = generateCase({ target: CATEGORIES[i % CATEGORIES.length] as Category }, rng);
+      const set = byId.get(g.case.patient.illustrationId) ?? new Set<string>();
+      set.add(g.case.patient.situationKey);
+      byId.set(g.case.patient.illustrationId, set);
+    }
+
+    for (const illustration of ILLUSTRATIONS) {
+      if (illustration.situationKeys.length < 2) continue;
+      expect(
+        byId.get(illustration.id)?.size ?? 0,
+        `${illustration.id}: 状況文が1種類しか出ていない`,
+      ).toBeGreaterThan(1);
     }
   });
 });

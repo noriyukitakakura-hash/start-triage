@@ -61,7 +61,18 @@ export function PatientFigure({ case: c, animate, className }: PatientFigureProp
       className={['patient-figure', 'h-full w-full', className].filter(Boolean).join(' ')}
     >
       {parts.behind}
-      <g {...chestProps}>{parts.chest}</g>
+      {/*
+        傾きは `.chest` の**外側**で与える。内側で回すと `.chest` の
+        バウンディングボックスが回転後の軸平行外接矩形になり、
+        `transform-origin: center bottom` が横隔膜ではなく最下の角を指す
+      */}
+      {parts.chestRotate === undefined ? (
+        <g {...chestProps}>{parts.chest}</g>
+      ) : (
+        <g transform={`rotate(${parts.chestRotate.deg} ${parts.chestRotate.cx} ${parts.chestRotate.cy})`}>
+          <g {...chestProps}>{parts.chest}</g>
+        </g>
+      )}
       {parts.front}
     </svg>
   );

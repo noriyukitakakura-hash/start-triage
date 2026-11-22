@@ -306,19 +306,36 @@ export const ja = {
   'patient.figureLabel': '傷病者のイラスト',
 
   // --- 状況文（domain/illustrations.ts のキー。SPEC §3.4） ---
+  //
+  // **歩行可能な症例は「自力で歩いた」ことを文中で明言する。**
+  // 「立ち上がった」だけでは歩行可否を決められない（SPEC §7 最上段のリスク）。
   'situation.walkedOnOwn': '呼びかけに応じて自力で歩いてきた',
+  'situation.walkedToAssemblyPoint': '指示を聞いて、自力で集合場所まで歩いてきた',
+  'situation.walkedOutOfBuilding': '自力で建物から歩いて出てきた',
   'situation.limpedOver': '足を引きずりながら自力で歩いてきた',
+  'situation.limpedWincing': '痛みをこらえながら、足を引きずって自力で歩いてきた',
   'situation.walkedHoldingArm': '腕を押さえながら自力で歩いてきた',
-  'situation.stoodAndWaved': '自分で立ち上がり、手を挙げて応答した',
+  'situation.walkedHoldingShoulder': '肩を押さえながら自力で歩いてきた',
+  'situation.stoodAndWalkedOver': '自分で立ち上がり、手を挙げて自力で歩いてきた',
+  'situation.stoodAndEvacuatedOnOwn': '自分で立ち上がって、自力で歩いて避難してきた',
   'situation.walkedSlowlyOnOwn': 'ゆっくりだが自力で歩いて避難してきた',
+  'situation.walkedSlowlyShortOfBreath': '息を切らしながらも、ゆっくり自力で歩いてきた',
   'situation.sittingUnableToStand': '座り込んでおり、立ち上がれない',
+  'situation.triedToStandAndFailed': '立ち上がろうとしたが座り込んでしまい、歩けない',
   'situation.lyingStill': '仰向けに倒れて動かない',
+  'situation.lyingStillNoResponseToCall': '仰向けに倒れており、呼びかけても動かない',
   'situation.lyingFaceDown': 'うつ伏せに倒れて動かない',
+  'situation.faceDownCannotMove': '床にうつ伏せのまま、自分では動けない',
   'situation.legsPinnedByDebris': '瓦礫に下肢を挟まれて動けない',
+  'situation.legsPinnedCallingForHelp': '下肢が瓦礫の下敷きになり、助けを求めている',
   'situation.leaningUnableToMove': '壁にもたれたまま動けない',
+  'situation.leaningCannotStepForward': '壁にもたれており、一歩も足が出ない',
   'situation.trappedInVehicle': '車内に閉じ込められて動けない',
+  'situation.trappedCannotGetOut': '運転席で挟まれ、自分では出られない',
   'situation.sittingAgainstDebris': '瓦礫に寄りかかって座り込んでいる',
+  'situation.proppedOnDebrisCannotStand': '瓦礫に寄りかかったまま、立ち上がれない',
   'situation.standingButCannotWalk': '立っているが、足が動かず歩けない',
+  'situation.standingHoldingOnCannotWalk': '何かにつかまって立っているが、歩くことはできない',
 
   'dev.scaffoldReady': 'P0 雛形構築が完了しました。現在の言語: {locale}',
 } as const;

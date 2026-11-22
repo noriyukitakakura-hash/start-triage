@@ -30,26 +30,12 @@ function Limb({ d, w = 11 }: { d: string; w?: number }) {
 /**
  * 胸郭。`children` ではなく矩形で描くのは、全ポーズで
  * バウンディングボックスの底辺が確実に横隔膜/背面になるようにするため。
+ *
+ * **傾きはここで持たない。** `FigureParts.chestRotate` で宣言し、
+ * `PatientFigure` が `.chest` の**外側**で回す（下記の規約を参照）。
  */
-function Chest({
-  x,
-  y,
-  w,
-  h,
-  rx,
-  rotate,
-}: {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  rx: number;
-  rotate?: { deg: number; cx: number; cy: number };
-}) {
-  const rect = <rect x={x} y={y} width={w} height={h} rx={rx} className="torso" />;
-  if (rotate === undefined) return rect;
-  // 回転は chest グループの外側で行う。内側で回すと scaleY の向きがずれる
-  return <g transform={`rotate(${rotate.deg} ${rotate.cx} ${rotate.cy})`}>{rect}</g>;
+function Chest({ x, y, w, h, rx }: { x: number; y: number; w: number; h: number; rx: number }) {
+  return <rect x={x} y={y} width={w} height={h} rx={rx} className="torso" />;
 }
 
 /** 頸部。胸郭が挙上すると肩がこれに近づき、動きが読み取りやすくなる */
@@ -72,6 +58,14 @@ export interface FigureParts {
   chest: ReactNode;
   /** 胸郭より手前に描くもの（頭部・四肢） */
   front: ReactNode;
+  /**
+   * 胸郭の傾き。**`.chest` の外側**で適用される。
+   *
+   * 内側で回すと `.chest` のバウンディングボックスが「回転後の矩形の軸平行外接矩形」になり、
+   * `transform-origin: center bottom` が横隔膜ではなく最下の**角**を指してしまう。
+   * さらに scaleY が体軸ではなく画面の縦方向に効き、膨らみがせん断する。
+   */
+  chestRotate?: { deg: number; cx: number; cy: number };
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +92,8 @@ const walkingUnaided: FigureParts = {
 /** 足を引きずって歩行 */
 const walkingLimping: FigureParts = {
   behind: <Ground />,
-  chest: <Chest x={85} y={58} w={30} h={44} rx={13} rotate={{ deg: -6, cx: 100, cy: 102 }} />,
+  chest: <Chest x={85} y={58} w={30} h={44} rx={13} />,
+  chestRotate: { deg: -6, cx: 100, cy: 102 },
   front: (
     <>
       <Head cx={96} cy={32} r={14} />
@@ -152,16 +147,17 @@ const standingWaving: FigureParts = {
 /** ゆっくりだが自力で歩行 */
 const walkingSlowly: FigureParts = {
   behind: <Ground />,
-  chest: <Chest x={86} y={60} w={30} h={42} rx={13} rotate={{ deg: 9, cx: 101, cy: 102 }} />,
+  chest: <Chest x={86} y={60} w={30} h={42} rx={13} />,
+  chestRotate: { deg: 9, cx: 101, cy: 102 },
   front: (
     <>
       {/* 前かがみ */}
-      <Head cx={112} cy={38} r={14} />
-      <Neck x={100} y={50} w={12} h={14} />
+      <Head cx={112} cy={35} r={14} />
+      <Neck x={100} y={47} w={12} h={17} />
       <Limb d="M100 102 L94 142 L92 184" />
       <Limb d="M100 102 L111 142 L118 183" />
       <Limb d="M86 74 L70 102 L76 124" w={9} />
-      <Limb d="M120 72 L134 98 L130 120" w={9} />
+      <Limb d="M122 72 L134 98 L130 120" w={9} />
     </>
   ),
 };
@@ -177,8 +173,8 @@ const sittingSlumped: FigureParts = {
   front: (
     <>
       {/* うなだれた頭部 */}
-      <Head cx={84} cy={72} r={14} />
-      <Neck x={81} y={82} w={12} h={14} />
+      <Head cx={84} cy={69} r={14} />
+      <Neck x={81} y={80} w={12} h={16} />
       {/* 前方へ投げ出した脚 */}
       <Limb d="M96 138 L142 158 L166 162" />
       <Limb d="M96 146 L138 172 L164 176" />
@@ -257,7 +253,8 @@ const leaningWall: FigureParts = {
       <line x1={168} y1={16} x2={168} y2={186} strokeWidth={3} className="prop" />
     </>
   ),
-  chest: <Chest x={128} y={62} w={30} h={44} rx={13} rotate={{ deg: 9, cx: 143, cy: 106 }} />,
+  chest: <Chest x={128} y={62} w={30} h={44} rx={13} />,
+  chestRotate: { deg: 9, cx: 143, cy: 106 },
   front: (
     <>
       <Head cx={146} cy={36} r={14} />
@@ -288,11 +285,11 @@ const trappedVehicle: FigureParts = {
       <circle cx={152} cy={172} r={13} className="prop-fill" />
     </>
   ),
-  chest: <Chest x={74} y={104} w={28} h={38} rx={12} />,
+  chest: <Chest x={74} y={107} w={28} h={35} rx={12} />,
   front: (
     <>
       <Head cx={84} cy={84} r={13} />
-      <Neck x={81} y={93} w={11} h={12} />
+      <Neck x={81} y={93} w={11} h={15} />
       {/* 前方へ伸ばした脚 */}
       <Limb d="M92 142 L124 154 L146 150" w={10} />
       {/* 腕は胸郭の外側（左）へ */}
@@ -312,11 +309,12 @@ const sittingAgainstDebris: FigureParts = {
       <line x1={140} y1={102} x2={150} y2={184} strokeWidth={3} className="prop" />
     </>
   ),
-  chest: <Chest x={80} y={96} w={30} h={44} rx={13} rotate={{ deg: 10, cx: 95, cy: 140 }} />,
+  chest: <Chest x={80} y={96} w={30} h={44} rx={13} />,
+  chestRotate: { deg: 10, cx: 95, cy: 140 },
   front: (
     <>
-      <Head cx={90} cy={72} r={14} />
-      <Neck x={86} y={82} w={12} h={14} />
+      <Head cx={90} cy={69} r={14} />
+      <Neck x={86} y={80} w={12} h={16} />
       {/* 左方へ投げ出した脚 */}
       <Limb d="M95 142 L54 160 L32 158" />
       <Limb d="M97 150 L58 176 L36 176" />
