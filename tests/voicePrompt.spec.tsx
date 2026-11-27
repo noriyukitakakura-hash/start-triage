@@ -168,7 +168,7 @@ describe('声かけは回答の前提条件ではない', () => {
     const { container } = wrap(OBEYING);
     // 吹き出しが無いだけで、他の操作は妨げられない
     expect(container.querySelector('[aria-label="声かけ"]')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '呼吸を数える' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '呼吸ごとに押す' })).toBeEnabled();
   });
 });
 

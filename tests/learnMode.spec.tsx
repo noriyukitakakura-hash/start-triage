@@ -157,11 +157,11 @@ describe('実測モードは呼吸数の数値を画面に出さない', () => {
 
   it('計数UIは実測モードのみ表示する', () => {
     renderCard(BREATHING, 'observed');
-    expect(screen.getByRole('button', { name: '呼吸を数える' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '呼吸ごとに押す' })).toBeInTheDocument();
 
     renderCard(BREATHING, 'numeric');
     // 数値モードのカードを足しても計数ボタンは増えない
-    expect(screen.getAllByRole('button', { name: '呼吸を数える' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: '呼吸ごとに押す' })).toHaveLength(1);
   });
 });
 

@@ -86,8 +86,11 @@ export function CrtInstrument({ case: c, onMeasured, measured }: CrtInstrumentPr
            * 同じ名前の操作が二つ並び、どちらを押すのか迷わせる。
            * ここは押し方を示す説明に留め、高さだけ揃える。
            */
-          <p className="flex h-11 items-center justify-center text-center text-[11px] leading-tight text-slate-400">
-            {t('crt.pressHint')}
+          <p
+            id="crt-press-hint"
+            className="flex h-11 items-center justify-center text-center text-[11px] leading-tight text-slate-400"
+          >
+            {t('crt.pressHint', { seconds: CRT_PRESS_SECONDS })}
           </p>
         )
       }
@@ -122,6 +125,9 @@ function Nail({
     <button
       type="button"
       aria-label={t('crt.press')}
+      // 5秒押すという手技はラベルではなく説明として渡す。
+      // ラベルを長くすると、既に名前で引いている箇所の意味が変わる
+      aria-describedby="crt-press-hint"
       className="crt-target"
       onPointerDown={onPressStart}
       onPointerUp={onPressEnd}

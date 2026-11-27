@@ -82,7 +82,6 @@ export const ja = {
   'vital.commands': '指示応答',
   'vital.commands.follows': '従える',
   'vital.commands.doesNotFollow': '従えない',
-  'vital.breathing': '自発呼吸',
   'vital.breathing.present': 'あり',
   'vital.breathing.absent': 'なし',
 
@@ -99,16 +98,12 @@ export const ja = {
   'learn.shortcutHint': 'キーボード: 1 / 2 / 3 / 0 で回答、Enter で次へ',
 
   // --- 実測モード (docs/OBSERVATION.md §6) ---
-  'observation.heading': '呼吸の観察',
-  'observation.instruction': '胸郭の動きを見て、呼吸に合わせてタップしてください。',
-  'observation.countingOptional': '数えずに判断してもかまいません。',
-  'observation.tap': '呼吸を数える',
+  'observation.heading': '呼吸を数える',
+  'observation.instruction': 'イラストの胸郭の動きを見ます。1回の呼吸ごとにボタンを1回押します。',
+  'observation.tap': '呼吸ごとに押す',
   'observation.reset': '数え直す',
-  'observation.elapsed': '経過',
   'observation.elapsedValue': '{seconds} 秒',
-  'observation.taps': 'タップ',
   'observation.tapsValue': '{count} 回',
-  'observation.estimated': '推定',
   'observation.estimatedValue': '約 {rate} 回/分',
   'observation.needMoreTaps': 'もう少し数えると推定値が出ます',
   'observation.openAirway': '気道確保を行う',
@@ -158,12 +153,13 @@ export const ja = {
   // --- ホーム (S1) ---
   'home.learn.description': '1問ずつ解説を見ながら練習します。回数無制限。',
   'home.challenge.description': '10問を連続で解き、所要時間を計測します。',
-  'home.reference.description': 'START法の判定フローと区分の定義を確認します。',
+  'home.reference.description': 'START法の判定フロー・区分の定義と、測定のしかたを確認します。',
   'home.bestTime': '自己ベスト',
   'home.bestTime.numeric': '数値モード',
   'home.bestTime.observed': '実測モード',
   'home.noBestTime': '記録なし',
   'common.back': '戻る',
+  'common.close': '閉じる',
 
   // --- 10問チャレンジ (S3) ---
   'challenge.heading': '10問チャレンジ',
@@ -226,23 +222,14 @@ export const ja = {
   'crt.heading': 'CRT（毛細血管再充満時間）の測定',
   'crt.instruction': '爪を{seconds}秒間押し続けてから離し、色が戻るまでの時間を測ります。',
   'crt.press': '爪を押す',
-  'crt.pressing': '押し続けてください 残り {seconds} 秒',
   'crt.tooShort': '{seconds}秒間押し続けてください。圧迫が足りないと正しく測れません。',
-  'crt.watching': '色が戻ったら押してください',
   'crt.reportReturned': '色が戻った',
-  'crt.measured': '測定値 {seconds} 秒',
   'crt.retry': '測り直す',
-  'crt.notMeasured': '未測定',
 
   // --- 脈拍の実測 ---
-  'pulse.heading': '橈骨動脈の触知',
-  'pulse.instruction': '手首の橈骨動脈に触れ、拍動に合わせてタップしてください。',
-  'pulse.tap': '脈を数える',
-  'pulse.notPalpable': '拍動を触れません',
-  'pulse.palpable': '拍動を触れます',
+  'pulse.heading': '脈拍を数える',
+  'pulse.instruction': '手首の触知点が拍動します。1拍ごとにボタンを1回押します。数え方は呼吸と同じです。',
   'pulse.measured': '{rate} 回/分',
-  'pulse.notMeasured': '未測定',
-  'pulse.measure': '触知する',
 
   // --- アナログ時計 ---
   'clock.elapsed': '経過時間',
@@ -256,16 +243,35 @@ export const ja = {
   'explain.crtBandDelayed': '{threshold}秒以上',
   'explain.crtBandWithinRange': '{threshold}秒未満',
 
+  // --- 測定マニュアル (SPEC §2.1 / S5。docs/OBSERVATION.md §6) ---
+  //
+  // **最初の一文で誤解を潰す。** 「押せば結果が出る」と読まれた実績がある。
+  'manual.heading': '測定のしかた',
+  'manual.lead': 'ボタンを押しても測定結果は出ません。数えるのも時間を計るのも利用者自身です。',
+  'manual.leadRole': 'アプリが再現するのは傷病者の状態だけです。各ボタンは現場で自分の手で行う動作にあたり、押した回数や押していた時間から値が決まります。',
+  'manual.breath.estimate': 'タップが{taps}回以上、かつ最初のタップから{seconds}秒以上たつと、1分あたりの推定値が出ます。',
+  'manual.breath.dashIsNormal': 'それまで推定の欄は「—」のままです。押しても何も起きないように見えますが、タップは記録されています。',
+  'manual.crt.release': '離すと爪が白くなり、症例ごとの速さで色が戻ります。戻ったと思った瞬間に「色が戻った」を押すと、離してから押すまでが測定値になります。',
+  'manual.pulse.notPalpable': '触知できない症例では、触知点はまったく動かず、押すボタンも出ません。壊れているのではなく、「触知不能」という所見そのものです。',
+  'manual.consciousness.heading': '意識（従命）を確かめる',
+  'manual.consciousness.ask': 'イラストに重ねた3つの声かけから選んで押します。押すまで反応は出ません。',
+  'manual.consciousness.obeying': '「聞こえますか？」への反応だけでは従命を確かめられません。「目を開けてください」「手を握ってください」で確かめます。',
+  'manual.allOptional': 'どの測定も必須ではありません。測らずに区分を選んでもかまいません。',
+  'manual.open': '測り方',
+  'manual.firstRun.start': 'はじめる',
+
   // --- 狭い計測器セル用の短い文言（SPEC §5.1） ---
-  'observation.instructionShort': '胸郭を見て\nタップ',
+  // 改行文字は入れない。描画側に whitespace-pre-line がなく、折り返しは幅に任せる
+  'observation.instructionShort': '胸郭を見て 1呼吸に1回',
   'crt.remaining': '残り {seconds} 秒',
   'crt.tooShortShort': '{seconds}秒押す',
   'crt.watchingShort': '戻ったら押す',
-  'pulse.tapShort': '脈を数える',
+  'pulse.tapShort': '1拍ごとに押す',
   'pulse.absentShort': '触れない',
+  'pulse.absentHint': '静止のまま。押す操作はありません',
   'vital.commandsShort': '指示応答',
 
-  'crt.pressHint': '爪を長押し',
+  'crt.pressHint': '爪を{seconds}秒押して離す',
 
   // --- PWA (SPEC §4.5) ---
   'pwa.updateAvailable': '新しい版が利用できます。訓練の区切りで更新してください。',

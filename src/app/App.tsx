@@ -5,7 +5,9 @@ import { LearnMode } from '@/features/learn/LearnMode';
 import { ReferenceScreen } from '@/features/reference/ReferenceScreen';
 import { useI18n } from '@/i18n';
 import type { TranslationKey } from '@/i18n/types';
-import { acknowledgeDisclaimer, hasAcknowledgedDisclaimer } from '@/lib/storage';
+import { acknowledgeDisclaimer, hasAcknowledgedDisclaimer, hasSeenMeasureGuide, markMeasureGuideSeen } from '@/lib/storage';
+import { ManualSheet } from '@/features/reference/ManualSheet';
+import { useSettings } from './SettingsProvider';
 import { DisclaimerDialog } from './DisclaimerDialog';
 import { SettingsSheet } from './SettingsSheet';
 import { UpdateNotice } from '@/components/UpdateNotice';
@@ -48,6 +50,32 @@ export function App() {
     setDisclaimerOpen(true);
   }, []);
 
+  const { settings } = useSettings();
+  const [manualOpen, setManualOpen] = useState(false);
+  /*
+   * 初回の測定案内。**ここで持つ理由がある。**
+   *
+   * - 免責の確認が先。免責は初回に閉じられない作りなので、下から別のモーダルを
+   *   開くと確認できなくなる。両方を知っているのはこの階層だけである
+   * - **10問モードでは絶対に出さない。** 計時中であり、記録が汚れる。
+   *   経路で弾けばモード側の実装に依存せず保証できる
+   * - 数値モードには測る操作がないので出さない
+   */
+  const [guideOpen, setGuideOpen] = useState(false);
+  const showGuide =
+    guideOpen ||
+    (route === '/learn' &&
+      settings.vitalsPresentation === 'observed' &&
+      !disclaimerOpen &&
+      !hasSeenMeasureGuide());
+
+  const dismissGuide = useCallback(() => {
+    markMeasureGuideSeen();
+    setGuideOpen(false);
+  }, []);
+
+  const isCaseRoute = route === '/learn' || route === '/challenge';
+
   return (
     <div className="grid h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-slate-900 text-slate-100">
       <header className="flex shrink-0 items-center gap-1 border-b border-slate-700 px-2 py-1.5">
@@ -62,6 +90,20 @@ export function App() {
           </button>
         )}
         <h1 className="min-w-0 flex-1 truncate px-1 text-sm font-bold">{t(SCREEN_TITLE[route])}</h1>
+        {/*
+          測り方への導線。**症例ペインの高さを使わない**ようヘッダーに置く。
+          計測器のセルは 150px を使い切っており、判定材料のための高さを削れない
+        */}
+        {isCaseRoute && (
+          <button
+            type="button"
+            onClick={() => setManualOpen(true)}
+            aria-label={t('manual.open')}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xl text-slate-300 transition active:scale-95"
+          >
+            <span aria-hidden>?</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
@@ -87,6 +129,8 @@ export function App() {
         onClose={() => setSettingsOpen(false)}
         onOpenDisclaimer={openDisclaimer}
       />
+      <ManualSheet open={manualOpen} onClose={() => setManualOpen(false)} />
+      <ManualSheet open={showGuide && !manualOpen} onClose={dismissGuide} firstRun />
       <UpdateNotice />
       <DisclaimerDialog
         open={disclaimerOpen}

@@ -81,6 +81,20 @@ export interface LearnStats {
  */
 export const DISCLAIMER_VERSION = 1;
 
+/**
+ * 測定の案内を見せた版（SPEC §2.1）。
+ *
+ * **真偽値ではなく版番号にする。** 計測器の操作を実質的に変えたらこの値を上げ、
+ * 既存の利用者にもう一度見せられるようにするため。
+ *
+ * **`SCHEMA_VERSION` は上げてはならない。** `loadState` は
+ * `version > SCHEMA_VERSION` を既定値へ落とす作りで、落とすと自己ベストも
+ * 設定も失われる。これは Service Worker を持つ PWA であり、新版を配っても
+ * 旧版のクライアントがしばらく動き続ける。項目を足すだけなら、
+ * 欠けた項目が既定値に落ちるだけなので版を上げる必要はない。
+ */
+export const MEASURE_GUIDE_VERSION = 1;
+
 export interface PersistedState {
   schemaVersion: number;
   settings: Settings;
@@ -88,6 +102,8 @@ export interface PersistedState {
   learnStats: LearnStats;
   /** 利用者が確認した免責文の版。未確認は null */
   disclaimerAckVersion: number | null;
+  /** 利用者に見せた測定案内の版。未表示は null */
+  measureGuideSeenVersion: number | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -123,6 +139,7 @@ export const DEFAULT_STATE: PersistedState = {
   bestTimeMs: DEFAULT_BEST_TIMES,
   learnStats: emptyLearnStats(),
   disclaimerAckVersion: null,
+  measureGuideSeenVersion: null,
 };
 
 function readRaw(): unknown {
@@ -227,6 +244,10 @@ export function loadState(): PersistedState {
       typeof obj.disclaimerAckVersion === 'number' && Number.isFinite(obj.disclaimerAckVersion)
         ? obj.disclaimerAckVersion
         : null,
+    measureGuideSeenVersion:
+      typeof obj.measureGuideSeenVersion === 'number' && Number.isFinite(obj.measureGuideSeenVersion)
+        ? obj.measureGuideSeenVersion
+        : null,
   };
 }
 
@@ -272,6 +293,17 @@ export function hasAcknowledgedDisclaimer(): boolean {
 /** 免責文を確認したことを記録する */
 export function acknowledgeDisclaimer(): void {
   saveState({ ...loadState(), disclaimerAckVersion: DISCLAIMER_VERSION });
+}
+
+/** 現行版の測定案内を見たか */
+export function hasSeenMeasureGuide(): boolean {
+  const seen = loadState().measureGuideSeenVersion;
+  return seen !== null && seen >= MEASURE_GUIDE_VERSION;
+}
+
+/** 測定案内を見たことを記録する */
+export function markMeasureGuideSeen(): void {
+  saveState({ ...loadState(), measureGuideSeenVersion: MEASURE_GUIDE_VERSION });
 }
 
 /** 学習モードの1問分の結果を累計に加える */

@@ -256,7 +256,7 @@ describe('脈拍: 触知可否が手がかりになる', () => {
 
   it('触知不能ではタップ計数を出さない（数える対象がない）', () => {
     wrap(<PulseInstrument case={NOT_PALPABLE} onCounted={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: '脈を数える' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '1拍ごとに押す' })).not.toBeInTheDocument();
   });
 
   it('触知可なら脈拍どおりの周期で拍動する', () => {
@@ -275,7 +275,7 @@ describe('脈拍: 触知可否が手がかりになる', () => {
     const onCounted = vi.fn();
     wrap(<PulseInstrument case={PALPABLE} onCounted={onCounted} />);
 
-    await user.click(screen.getByRole('button', { name: '脈を数える' }));
+    await user.click(screen.getByRole('button', { name: '1拍ごとに押す' }));
     expect(onCounted).toHaveBeenCalledTimes(1);
   });
 
@@ -335,9 +335,9 @@ describe('計測器を常時表示する（SPEC §5.1）', () => {
   it('3つの計測器が同時に存在する', () => {
     wrap(<CaseCard case={PALPABLE} presentation="observed" />);
 
-    expect(screen.getByRole('button', { name: '呼吸を数える' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '呼吸ごとに押す' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: '爪を押す' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: '脈を数える' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1拍ごとに押す' })).toBeInTheDocument();
   });
 
   it('計測しなくても区分を回答できる（前提条件ではない）', () => {
@@ -352,7 +352,7 @@ describe('数値モードは同じ枠に数値を入れる', () => {
     wrap(<CaseCard case={PALPABLE} presentation="numeric" />);
 
     expect(screen.queryByRole('button', { name: '爪を押す' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '脈を数える' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '1拍ごとに押す' })).not.toBeInTheDocument();
     expect(screen.getByText('2.8 秒')).toBeInTheDocument();
     expect(screen.getByText('120 回/分')).toBeInTheDocument();
     expect(screen.getByText('18 回/分')).toBeInTheDocument();

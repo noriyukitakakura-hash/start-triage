@@ -2,6 +2,7 @@ import { JP_FDMA } from '@/domain/profiles';
 import { CATEGORIES, DECIDING_STEPS } from '@/domain/types';
 import { useI18n } from '@/i18n';
 import type { TranslationKey } from '@/i18n/types';
+import { MeasurementManual } from './MeasurementManual';
 
 /**
  * START法リファレンス（SPEC §2.1 / S5）。
@@ -80,6 +81,17 @@ export function ReferenceScreen() {
           </li>
         </ul>
         <p className="mt-1 text-[11px] leading-tight text-slate-400">{t('disclaimer.criteria')}</p>
+      </div>
+
+      {/*
+        測定のしかたは最後に置く。先頭に入れると「採用している基準値」が
+        長文の下へ埋まる。採用基準の明示は docs/I18N.md §2 が S5 に求める事項であり、
+        見つけにくくしてはならない。
+        発見性は初回案内と計測器からの導線（App のシート）が担う
+      */}
+      <div>
+        <h2 className="mb-1 text-sm font-bold text-slate-300">{t('manual.heading')}</h2>
+        <MeasurementManual />
       </div>
     </section>
   );
