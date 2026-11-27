@@ -85,7 +85,6 @@ export const en: Messages = {
   'vital.commands': 'Response to commands',
   'vital.commands.follows': 'Follows',
   'vital.commands.doesNotFollow': 'Does not follow',
-  'vital.breathing': 'Spontaneous breathing',
   'vital.breathing.present': 'Present',
   'vital.breathing.absent': 'Absent',
 
@@ -102,16 +101,12 @@ export const en: Messages = {
   'learn.shortcutHint': 'Keyboard: 1 / 2 / 3 / 0 to answer, Enter for next',
 
   // --- 実測モード ---
-  'observation.heading': 'Observe the breathing',
-  'observation.instruction': 'Watch the chest and tap along with each breath.',
-  'observation.countingOptional': 'You may also decide without counting.',
-  'observation.tap': 'Count breaths',
+  'observation.heading': 'Counting breaths',
+  'observation.instruction': 'Watch the chest in the illustration. Press the button once for each breath.',
+  'observation.tap': 'Tap per breath',
   'observation.reset': 'Start over',
-  'observation.elapsed': 'Elapsed',
   'observation.elapsedValue': '{seconds} sec',
-  'observation.taps': 'Taps',
   'observation.tapsValue': '{count}',
-  'observation.estimated': 'Estimate',
   'observation.estimatedValue': 'About {rate} /min',
   'observation.needMoreTaps': 'Keep counting to get an estimate',
   'observation.openAirway': 'Open the airway',
@@ -161,12 +156,13 @@ export const en: Messages = {
   // --- ホーム (S1) ---
   'home.learn.description': 'Work through cases one at a time with explanations. Unlimited.',
   'home.challenge.description': 'Answer 10 cases in a row against the clock.',
-  'home.reference.description': 'Review the START flow and the category definitions.',
+  'home.reference.description': 'Review the START flow, the category definitions, and how to measure.',
   'home.bestTime': 'Personal best',
   'home.bestTime.numeric': 'Number mode',
   'home.bestTime.observed': 'Observe mode',
   'home.noBestTime': 'No record yet',
   'common.back': 'Back',
+  'common.close': 'Close',
 
   // --- 10問チャレンジ (S3) ---
   'challenge.heading': '10-Case Challenge',
@@ -229,23 +225,14 @@ export const en: Messages = {
   'crt.heading': 'Capillary refill time',
   'crt.instruction': 'Press the nail for {seconds} seconds, release, and time how long the colour takes to return.',
   'crt.press': 'Press the nail',
-  'crt.pressing': 'Keep pressing — {seconds}s left',
   'crt.tooShort': 'Hold for {seconds} seconds. Without enough pressure the measurement is not valid.',
-  'crt.watching': 'Tap when the colour has returned',
   'crt.reportReturned': 'Colour has returned',
-  'crt.measured': 'Measured {seconds} sec',
   'crt.retry': 'Measure again',
-  'crt.notMeasured': 'Not measured',
 
   // --- 脈拍の実測 ---
-  'pulse.heading': 'Radial pulse',
-  'pulse.instruction': 'Feel the radial pulse at the wrist and tap along with each beat.',
-  'pulse.tap': 'Count beats',
-  'pulse.notPalpable': 'No pulse felt',
-  'pulse.palpable': 'Pulse felt',
+  'pulse.heading': 'Counting the pulse',
+  'pulse.instruction': 'The point at the wrist pulsates. Press the button once per beat. Counting works as it does for breathing.',
   'pulse.measured': '{rate} /min',
-  'pulse.notMeasured': 'Not measured',
-  'pulse.measure': 'Palpate',
 
   // --- アナログ時計 ---
   'clock.elapsed': 'Elapsed time',
@@ -259,16 +246,32 @@ export const en: Messages = {
   'explain.crtBandDelayed': '{threshold} sec or more',
   'explain.crtBandWithinRange': 'under {threshold} sec',
 
+  // --- 測定マニュアル (SPEC §2.1 / S5。docs/OBSERVATION.md §6) ---
+  'manual.heading': 'How to measure',
+  'manual.lead': 'Pressing a button never produces a measurement. You are the one who counts and times.',
+  'manual.leadRole': 'The app only reproduces the patient. Each button stands for something you would do with your own hands at the scene; the value comes from how many times you press, or how long you hold.',
+  'manual.breath.estimate': 'Once you have tapped {taps} or more times and {seconds} seconds have passed since the first tap, a per-minute estimate appears.',
+  'manual.breath.dashIsNormal': 'Until then the estimate stays as “—”. It can look as if nothing is happening, but every tap is being recorded.',
+  'manual.crt.release': 'On release the nail is blanched, and the colour returns at this patient\u2019s own speed. Press “Colour has returned” the moment you judge it has; the time from release to that press is your measurement.',
+  'manual.pulse.notPalpable': 'When the pulse is not palpable the point does not move at all and no button is shown. Nothing is broken — the absence is itself the finding.',
+  'manual.consciousness.heading': 'Checking command following',
+  'manual.consciousness.ask': 'Choose one of the three voice prompts over the illustration. No response appears until you press.',
+  'manual.consciousness.obeying': 'A response to “Can you hear me?” does not prove command following. Confirm with “Open your eyes” or “Squeeze my hand”.',
+  'manual.allOptional': 'None of these measurements is required. You may choose a category without measuring.',
+  'manual.open': 'How to measure',
+  'manual.firstRun.start': 'Start',
+
   // --- 狭い計測器セル用の短い文言 ---
-  'observation.instructionShort': 'Watch the chest\nand tap',
+  'observation.instructionShort': 'Watch the chest, one tap per breath',
   'crt.remaining': '{seconds}s left',
   'crt.tooShortShort': 'Hold {seconds}s',
   'crt.watchingShort': 'Tap when back',
-  'pulse.tapShort': 'Count beats',
+  'pulse.tapShort': 'Tap per beat',
   'pulse.absentShort': 'None felt',
+  'pulse.absentHint': 'No beat to count',
   'vital.commandsShort': 'Commands',
 
-  'crt.pressHint': 'Press & hold',
+  'crt.pressHint': 'Hold {seconds}s, release',
 
   // --- PWA ---
   'pwa.updateAvailable': 'A new version is ready. Update when you finish the current drill.',

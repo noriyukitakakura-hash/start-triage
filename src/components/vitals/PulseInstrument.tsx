@@ -87,7 +87,18 @@ export function PulseInstrument({ case: c, onCounted }: PulseInstrumentProps) {
         </span>
       }
       action={
-        palpable ? <InstrumentButton onClick={tap}>{t('pulse.tapShort')}</InstrumentButton> : undefined
+        palpable ? (
+          <InstrumentButton onClick={tap}>{t('pulse.tapShort')}</InstrumentButton>
+        ) : (
+          /*
+            **空欄のままにしない。** 触知不能では拍動も動かずボタンも出ないため、
+            操作欄が 44px の空白になり故障に見える。
+            所見であることを明示する（値は漏らさない。「触れない」は既に出ている）
+          */
+          <p className="flex h-11 items-center justify-center text-center text-[11px] leading-tight text-slate-400">
+            {t('pulse.absentHint')}
+          </p>
+        )
       }
     />
   );

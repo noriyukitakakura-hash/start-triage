@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, globSync, readdirSync, readFileSync } from 'node:fs';
+import { join, sep } from 'node:path';
 import { ja } from '@/i18n/ja';
 import { en } from '@/i18n/en';
 import { interpolate, translate } from '@/i18n';
@@ -74,6 +74,27 @@ describe('I18N.md §9-5: ドメイン層が生成するキーの実在性', () =
     // 画面には一生出ないまま翻訳の手間だけがかかる
     const referenced = new Set(ILLUSTRATIONS.flatMap((i) => i.situationKeys));
     const orphans = keys.filter((k) => k.startsWith('situation.') && !referenced.has(k));
+    expect(orphans).toEqual([]);
+  });
+
+  /**
+   * 旧 UI の名残で、どこからも参照されない長文キーが約20件たまっていた。
+   * 画面には一生出ないまま翻訳の手間だけがかかる。
+   *
+   * **対象は文字列リテラルで参照される接頭辞に限る。** `step.*` や
+   * `category.*` のようにテンプレートリテラルで組み立てるキーを含めると
+   * 全件が誤検知になる。
+   */
+  it('計測まわりに孤児キーがない', () => {
+    const PREFIXES = ['observation.', 'crt.', 'pulse.', 'manual.'];
+    const sources = globSync('src/**/*.{ts,tsx}')
+      .filter((f) => !f.includes(`${sep}i18n${sep}`))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n');
+
+    const orphans = keys.filter(
+      (k) => PREFIXES.some((prefix) => k.startsWith(prefix)) && !sources.includes(`'${k}'`),
+    );
     expect(orphans).toEqual([]);
   });
 

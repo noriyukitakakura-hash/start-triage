@@ -75,6 +75,7 @@ describe('loadState: 不正な値の検証', () => {
       bestTimeMs: DEFAULT_BEST_TIMES,
       learnStats: emptyLearnStats(),
       disclaimerAckVersion: null,
+      measureGuideSeenVersion: null,
     });
   });
 
@@ -119,6 +120,7 @@ describe('loadState: 不正な値の検証', () => {
       bestTimeMs: DEFAULT_BEST_TIMES,
       learnStats: emptyLearnStats(),
       disclaimerAckVersion: null,
+      measureGuideSeenVersion: null,
     });
   });
 });
@@ -299,7 +301,7 @@ describe('localStorage が使えない環境', () => {
       throw new DOMException('QuotaExceededError');
     });
 
-    expect(() => saveState({ schemaVersion: 2, settings: DEFAULT_SETTINGS, bestTimeMs: DEFAULT_BEST_TIMES, learnStats: emptyLearnStats(), disclaimerAckVersion: null })).not.toThrow();
+    expect(() => saveState({ schemaVersion: 2, settings: DEFAULT_SETTINGS, bestTimeMs: DEFAULT_BEST_TIMES, learnStats: emptyLearnStats(), disclaimerAckVersion: null, measureGuideSeenVersion: null })).not.toThrow();
     expect(() => patchSettings({ vitalsPresentation: 'observed' })).not.toThrow();
     expect(() => recordBestTime('numeric', 1000)).not.toThrow();
 

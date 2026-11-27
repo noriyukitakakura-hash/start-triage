@@ -62,10 +62,19 @@ export function BreathInstrument({ onChange }: BreathInstrumentProps) {
       }
       readout={
         <span aria-live="polite" className="font-mono text-sm font-semibold tabular-nums">
-          {result.estimatedRate === null ? (
+          {result.estimatedRate !== null ? (
+            t('observation.estimatedValue', { rate: result.estimatedRate })
+          ) : result.taps === 0 ? (
             <span className="text-xs font-normal text-slate-400">—</span>
           ) : (
-            t('observation.estimatedValue', { rate: result.estimatedRate })
+            /*
+              **「押したのに何も起きない」と読ませない。**
+              推定値は3回かつ3秒を満たすまで出ない（domain/tapCounting.ts）。
+              その間ここが「—」のままだと、故障だと受け取られる
+            */
+            <span className="font-sans text-[11px] font-normal leading-tight text-slate-400">
+              {t('observation.needMoreTaps')}
+            </span>
           )}
         </span>
       }
